@@ -62,7 +62,6 @@ html, body {
   width: 100%;
   position: relative;
   padding-bottom: 0;
-  background: transparent;
 }
 
 /* ===== Navbar — bottom on mobile, left sidebar on desktop ===== */
@@ -151,7 +150,6 @@ html, body {
 /* ===== Search Bar (input + suggestions) ===== */
 .search-bar {
   position: relative;
-  background: transparent;
 }
 
 .search-bar input {
@@ -177,7 +175,8 @@ html, body {
 .search-suggestions {
   display: none;
   position: absolute;
-  top: 44px;
+  top: 100%;
+  margin-top: 4px;
   left: 0;
   right: 0;
   background: var(--bg-tertiary);
