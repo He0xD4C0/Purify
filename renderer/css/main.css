@@ -84,9 +84,25 @@ html, body {
   background: rgba(232, 48, 60, 0.1);
 }
 
-#navbar .nav-tab svg {
-  width: 18px;
-  height: 18px;
+#navbar .nav-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#navbar .nav-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#navbar .nav-label {
+  font-size: inherit;
+  line-height: 1;
+  text-align: left;
 }
 
 /* ===== Main Content ===== */

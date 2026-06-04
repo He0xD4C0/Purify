@@ -529,8 +529,10 @@
     white-space: nowrap;
   }
 
-  #navbar .nav-tab svg {
+  #navbar .nav-icon {
     flex-shrink: 0;
+    width: 24px;
+    height: 24px;
   }
 
   #content {
