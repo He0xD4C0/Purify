@@ -28,11 +28,65 @@ export function renderSettings(container: HTMLElement): void {
       render: renderSettingsAI,
     },
     {
+      id: 'appearance',
+      label: '外观',
+      inline: (el: HTMLElement) => {
+        const isDark = (localStorage.getItem('purify_theme') || 'dark') === 'dark';
+        const toggle = document.createElement('input');
+        toggle.type = 'checkbox';
+        toggle.checked = isDark;
+        toggle.addEventListener('change', () => {
+          const dark = toggle.checked;
+          localStorage.setItem('purify_theme', dark ? 'dark' : 'light');
+          applyTheme(dark);
+        });
+        el.appendChild(toggle);
+      },
+    },
+    {
+      id: 'cache',
+      label: '缓存管理',
+      inline: (el: HTMLElement) => {
+        const btn = document.createElement('button');
+        btn.textContent = '清除缓存';
+        btn.style.cssText = 'padding:4px 12px;font-size:12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-secondary);cursor:pointer;';
+        btn.addEventListener('click', () => {
+          // Clear AI translation cache
+          Object.keys(localStorage).forEach((k) => {
+            if (k.startsWith('lyric_tr_') || k.startsWith('purify_cache_')) {
+              localStorage.removeItem(k);
+            }
+          });
+          btn.textContent = '已清除 ✓';
+          setTimeout(() => { btn.textContent = '清除缓存'; }, 2000);
+        });
+        el.appendChild(btn);
+      },
+    },
+    {
       id: 'about',
       label: '关于 Purify',
       render: renderSettingsAbout,
     },
   ]);
+}
+
+function applyTheme(dark: boolean): void {
+  if (dark) {
+    document.documentElement.style.setProperty('--bg-primary', '#0a0a0f');
+    document.documentElement.style.setProperty('--bg-secondary', '#12121a');
+    document.documentElement.style.setProperty('--bg-tertiary', '#1a1a28');
+    document.documentElement.style.setProperty('--text-primary', '#e8e8f0');
+    document.documentElement.style.setProperty('--text-secondary', '#8888a0');
+    document.documentElement.style.setProperty('--border', '#1e1e30');
+  } else {
+    document.documentElement.style.setProperty('--bg-primary', '#f5f5f7');
+    document.documentElement.style.setProperty('--bg-secondary', '#ffffff');
+    document.documentElement.style.setProperty('--bg-tertiary', '#e8e8ed');
+    document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+    document.documentElement.style.setProperty('--text-secondary', '#666666');
+    document.documentElement.style.setProperty('--border', '#d1d1d6');
+  }
 }
 
 function settingsPage(sections: { label: string; content: string; action?: () => void }[]): HTMLElement {

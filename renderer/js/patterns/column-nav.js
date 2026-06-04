@@ -32,14 +32,28 @@ export class ColumnNav {
         const leftCol = document.createElement('div');
         leftCol.className = 'column-nav-left';
         this.items.forEach((item) => {
-            const btn = document.createElement('button');
-            btn.className = 'column-nav-item' + (item.id === this.activeItem ? ' active' : '');
-            btn.textContent = item.label;
-            btn.addEventListener('click', () => {
-                this.activeItem = item.id;
-                this.render();
-            });
-            leftCol.appendChild(btn);
+            if (item.inline) {
+                // Inline item — render inline action (toggle/button)
+                const row = document.createElement('div');
+                row.className = 'column-nav-item column-nav-inline';
+                row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+                const label = document.createElement('span');
+                label.textContent = item.label;
+                row.appendChild(label);
+                item.inline(row);
+                leftCol.appendChild(row);
+            }
+            else {
+                // Navigable item
+                const btn = document.createElement('button');
+                btn.className = 'column-nav-item' + (item.id === this.activeItem ? ' active' : '');
+                btn.textContent = item.label;
+                btn.addEventListener('click', () => {
+                    this.activeItem = item.id;
+                    this.render();
+                });
+                leftCol.appendChild(btn);
+            }
         });
         this.root.appendChild(leftCol);
         // Right column: active item content
@@ -47,7 +61,7 @@ export class ColumnNav {
             const rightCol = document.createElement('div');
             rightCol.className = 'column-nav-right';
             const activeItem = this.items.find((i) => i.id === this.activeItem);
-            if (activeItem) {
+            if (activeItem?.render) {
                 activeItem.render(rightCol);
             }
             this.root.appendChild(rightCol);
@@ -67,7 +81,7 @@ export class ColumnNav {
             const content = document.createElement('div');
             content.className = 'column-nav-content';
             const activeItem = this.items.find((i) => i.id === this.activeItem);
-            if (activeItem) {
+            if (activeItem?.render) {
                 activeItem.render(content);
             }
             this.root.appendChild(content);
@@ -77,17 +91,31 @@ export class ColumnNav {
             const list = document.createElement('div');
             list.className = 'column-nav-list';
             this.items.forEach((item) => {
-                const btn = document.createElement('button');
-                btn.className = 'column-nav-item';
-                btn.innerHTML = `
-          <span>${item.label}</span>
-          <span class="column-nav-arrow">›</span>
-        `;
-                btn.addEventListener('click', () => {
-                    this.activeItem = item.id;
-                    this.render();
-                });
-                list.appendChild(btn);
+                if (item.inline) {
+                    // Inline item
+                    const row = document.createElement('div');
+                    row.className = 'column-nav-item column-nav-inline';
+                    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:14px 16px;';
+                    const label = document.createElement('span');
+                    label.textContent = item.label;
+                    row.appendChild(label);
+                    item.inline(row);
+                    list.appendChild(row);
+                }
+                else {
+                    // Navigable item
+                    const btn = document.createElement('button');
+                    btn.className = 'column-nav-item';
+                    btn.innerHTML = `
+            <span>${item.label}</span>
+            <span class="column-nav-arrow">›</span>
+          `;
+                    btn.addEventListener('click', () => {
+                        this.activeItem = item.id;
+                        this.render();
+                    });
+                    list.appendChild(btn);
+                }
             });
             this.root.appendChild(list);
         }
