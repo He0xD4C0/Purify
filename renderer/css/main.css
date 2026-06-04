@@ -180,7 +180,8 @@ html, body {
   right: 0;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
   max-height: 320px;
   overflow-y: auto;
   z-index: 20;

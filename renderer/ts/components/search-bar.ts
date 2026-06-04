@@ -91,9 +91,10 @@ export function initSearchBar(): void {
   });
 
   wrapper.appendChild(input);
-  wrapper.appendChild(suggestions);
   container.innerHTML = '';
   container.appendChild(wrapper);
+  // Suggestions lives on #search-bar so it aligns with its bottom edge
+  container.appendChild(suggestions);
 }
 
 /** Navigate to home page and emit search event */
