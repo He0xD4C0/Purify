@@ -1,7 +1,5 @@
 // Global search bar — always visible at top of app, across all pages
 import { api } from '../core/api.js';
-import { router } from '../core/router.js';
-import { bus } from '../core/event-bus.js';
 export function initSearchBar() {
     const container = document.getElementById('search-bar');
     if (!container)
@@ -97,11 +95,8 @@ export function initSearchBar() {
     container.innerHTML = '';
     container.appendChild(wrapper);
 }
-/** Navigate to home page and emit search event */
+/** Navigate to dedicated search page */
 function doSearch(keywords) {
-    // Always go to home page for search results
-    router.navigate('home');
-    // Slight delay to let the page render, then emit search
-    setTimeout(() => bus.emit('search:submit', keywords), 50);
+    location.hash = `search?q=${encodeURIComponent(keywords)}`;
 }
 //# sourceMappingURL=search-bar.js.map

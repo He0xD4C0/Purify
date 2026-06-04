@@ -1,6 +1,5 @@
 // Home / Discovery page — search bar at top, banner, personalized, daily recs
 import { router } from '../core/router.js';
-import { bus } from '../core/event-bus.js';
 import { state, playTrack } from '../core/app.js';
 import { api } from '../core/api.js';
 import { SwipeBanner } from '../patterns/swipe-banner.js';
@@ -8,14 +7,7 @@ import { renderPlaylistGrid } from '../components/playlist-card.js';
 import { renderSongList } from '../components/song-list.js';
 import { renderLoginPanel } from '../components/login-panel.js';
 let banner;
-let homeContainer = null;
-// Listen for global search — show results in home page
-bus.on('search:submit', (keywords) => {
-    if (homeContainer)
-        renderSearchResults(homeContainer, keywords);
-});
 export function renderHome(container) {
-    homeContainer = container;
     container.innerHTML = '';
     container.className = 'home-page';
     // 1. Banner
@@ -145,32 +137,6 @@ async function loadNewSongs(container) {
     }
     catch {
         // silently fail
-    }
-}
-async function renderSearchResults(container, keywords) {
-    try {
-        const res = await api.cloudsearch(keywords, 1, 20);
-        const songs = res.result?.songs || [];
-        // Clear container and show results
-        container.innerHTML = '';
-        const backBtn = document.createElement('button');
-        backBtn.textContent = '← 返回首页';
-        backBtn.style.cssText = 'background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;margin-bottom:16px;';
-        backBtn.addEventListener('click', () => renderHome(container));
-        container.appendChild(backBtn);
-        const title = document.createElement('h2');
-        title.style.marginBottom = '16px';
-        title.textContent = `搜索: "${keywords}"`;
-        container.appendChild(title);
-        const listWrap = document.createElement('div');
-        container.appendChild(listWrap);
-        renderSongList(songs.map(mapTrack), {
-            container: listWrap,
-            onPlay: (_, i) => playTrack(mapTrack(songs[i]), songs.map(mapTrack)),
-        });
-    }
-    catch {
-        // fail silently
     }
 }
 function mapTrack(raw) {

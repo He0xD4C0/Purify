@@ -10,6 +10,7 @@ import { renderLibrary } from '../pages/library.js';
 import { renderAccount } from '../pages/account.js';
 import { renderPlaylistDetail } from '../pages/playlist.js';
 import { renderSettings } from '../pages/settings.js';
+import { renderSearch } from '../pages/search.js';
 import { renderPlayerPage } from '../pages/player-page.js';
 import { audioEngine } from '../player/audio-engine.js';
 export const state = {
@@ -48,13 +49,18 @@ function getContent() {
 /** Shared page dispatch — called by both router and nav events */
 function renderContent(page) {
     const container = getContent();
-    // Handle sub-routes like playlist/123, settings/account
+    // Handle sub-routes like playlist/123, settings, search?q=
     if (page.startsWith('playlist/')) {
         const id = parseInt(page.split('/')[1]);
         if (id) {
             renderPlaylistDetail(container, id);
             return;
         }
+    }
+    if (page.startsWith('search')) {
+        const q = new URLSearchParams(page.split('?')[1] || '').get('q') || '';
+        renderSearch(container, q);
+        return;
     }
     if (page.startsWith('settings')) {
         renderSettings(container);
