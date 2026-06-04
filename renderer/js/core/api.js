@@ -41,6 +41,7 @@ export const api = {
     userSubcount: () => request('/user/subcount'),
     userLevel: () => request('/user/level'),
     userRecord: (uid, type) => request('/user/record', { uid, type }),
+    userUpdate: (params) => request('/user/update', params),
     recentListenList: () => request('/recent_listen_list'),
     // ---- Playback ----
     songUrlV1: (id, level) => request('/song/url/v1', { id, level: level || 'lossless' }),

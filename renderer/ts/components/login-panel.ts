@@ -12,8 +12,6 @@ declare global {
 }
 
 export function renderLoginPanel(container: HTMLElement, onClose?: () => void): void {
-  container.innerHTML = '';
-
   const panel = document.createElement('div');
   panel.className = 'login-panel';
 

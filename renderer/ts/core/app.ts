@@ -144,11 +144,14 @@ export async function init(): Promise<void> {
   // Player overlay — available globally on all pages
   bus.on('player:open-overlay', () => showPlayerOverlay());
 
-  // Global login trigger — any page can request auth
+  // Global login trigger — any page can request auth via modal overlay
   bus.on('auth:require-login', () => {
-    const c = getContent();
-    renderLoginPanel(c, () => {
-      // On close, re-render current page
+    const overlay = document.getElementById('modal-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    renderLoginPanel(overlay, () => {
+      overlay.classList.add('hidden');
+      overlay.innerHTML = '';
       renderContent(state.currentPage);
     });
   });

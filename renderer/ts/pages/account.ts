@@ -159,6 +159,17 @@ function renderMain(container: HTMLElement): void {
   container.appendChild(stats);
   fetchUserStats();
 
+  // ---- Account Info section ----
+  const infoSection = document.createElement('div');
+  infoSection.className = 'acct-section';
+  infoSection.innerHTML = '<div class="acct-section-title">账户信息</div>';
+  const infoWrap = document.createElement('div');
+  infoWrap.id = 'acct-info-wrap';
+  infoWrap.innerHTML = '<div style="padding:12px 16px;" class="text-muted text-sm">加载中...</div>';
+  infoSection.appendChild(infoWrap);
+  container.appendChild(infoSection);
+  fetchAccountInfo(infoWrap);
+
   // ---- Music Library section ----
   const libSection = document.createElement('div');
   libSection.className = 'acct-section';
@@ -364,6 +375,67 @@ function acctToggle(label: string, checked: boolean, onChange: (v: boolean) => v
 
   row.addEventListener('mouseenter', () => { row.style.background = 'var(--bg-secondary)'; });
   return row;
+}
+
+// ============ Account Info ============
+async function fetchAccountInfo(wrap: HTMLElement): Promise<void> {
+  try {
+    const [acctRes, levelRes] = await Promise.all([
+      api.userAccount(),
+      api.userLevel(),
+    ]);
+
+    const acct = (acctRes.body || acctRes) || {};
+    const profile = acct.profile || {};
+    const level = (levelRes.body || levelRes).data || levelRes.data || {};
+
+    // VIP info
+    const vipType = profile.vipType || 0;
+    const vipLabel = vipType === 11 ? '黑胶 SVIP' : vipType === 10 ? 'VIP' : '普通用户';
+    const vipClass = vipType === 11 ? 'svip' : vipType === 10 ? 'vip' : '';
+    const vipExpire = profile.vipRights?.redVipAnnualCount !== undefined
+      ? '年度会员' : '';
+
+    const rows: { label: string; value: string; cls?: string }[] = [
+      { label: '用户 ID', value: String(profile.userId || acct.account?.id || state.userProfile?.userId || '--') },
+      { label: '昵称', value: profile.nickname || '--' },
+      { label: '签名', value: profile.signature || '（未设置）' },
+      { label: 'VIP', value: vipLabel, cls: vipClass },
+      { label: '等级', value: level.level != null ? `Lv.${level.level}` : '--' },
+      { label: '性别', value: profile.gender === 1 ? '男' : profile.gender === 2 ? '女' : '未设置' },
+      { label: '生日', value: profile.birthday && profile.birthday > 0
+        ? new Date(profile.birthday).toISOString().split('T')[0] : '未设置' },
+      { label: '地区', value: [profile.province, profile.city].filter(Boolean).join(' ') || '未设置' },
+    ];
+
+    // Account binding status
+    if (acct.account) {
+      const a = acct.account;
+      if (a.userName) rows.push({ label: '用户名', value: a.userName });
+      rows.push({ label: '手机绑定', value: a.bindings?.some((b: any) => b.type === 1) ? '已绑定' : '未绑定' });
+      rows.push({ label: '邮箱绑定', value: a.bindings?.some((b: any) => b.type === 2) ? '已绑定' : '未绑定' });
+      rows.push({ label: '账户类型', value: a.type === 1 ? '手机' : a.type === 2 ? '邮箱' : a.type === 5 ? 'QQ' : a.type === 10 ? '微信' : '其他' });
+      if (a.createTime) {
+        rows.push({ label: '注册时间', value: new Date(a.createTime).toLocaleDateString('zh-CN') });
+      }
+    }
+
+    wrap.innerHTML = '';
+    rows.forEach((r) => {
+      const row = document.createElement('div');
+      row.className = 'acct-item';
+      row.style.cursor = 'default';
+      row.innerHTML = `
+        <span class="acct-item-label">${r.label}</span>
+        <span class="acct-item-value" style="${r.cls ? '' : ''}">${r.cls ? `<span class="music-badge ${r.cls}" style="font-size:11px;padding:1px 8px;">${r.value}</span>` : r.value}</span>
+      `;
+      row.addEventListener('mouseenter', () => { row.style.background = 'var(--bg-secondary)'; });
+      wrap.appendChild(row);
+    });
+
+  } catch {
+    wrap.innerHTML = '<div style="padding:12px 16px;" class="text-muted text-sm">加载失败</div>';
+  }
 }
 
 // ============ Stats ============

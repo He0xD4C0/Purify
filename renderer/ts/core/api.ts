@@ -59,6 +59,8 @@ export const api = {
   userLevel: () => request('/user/level'),
   userRecord: (uid?: string, type?: number) =>
     request('/user/record', { uid, type }),
+  userUpdate: (params: Record<string, string>) =>
+    request('/user/update', params),
   recentListenList: () => request('/recent_listen_list'),
 
   // ---- Playback ----

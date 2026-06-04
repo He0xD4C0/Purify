@@ -4,7 +4,6 @@ import { bus } from '../core/event-bus.js';
 import { saveCookie, state } from '../core/app.js';
 import { showModal } from './modal.js';
 export function renderLoginPanel(container, onClose) {
-    container.innerHTML = '';
     const panel = document.createElement('div');
     panel.className = 'login-panel';
     // Tabs
