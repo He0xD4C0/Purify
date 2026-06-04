@@ -47,23 +47,31 @@ export function renderSearch(container: HTMLElement, query: string): void {
   fwdBtn.style.cssText = 'width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:50%;color:var(--text-secondary);cursor:pointer;';
   fwdBtn.addEventListener('click', () => history.forward());
 
-  let canGoForward = false;
+  const FWD_KEY = 'purify_search_fwd';
+
+  // On render: if we arrived via back-navigation from search, enable forward
+  const canGoForward = sessionStorage.getItem(FWD_KEY) === '1';
+  sessionStorage.removeItem(FWD_KEY);
 
   function updateNavButtons(): void {
-    backBtn.style.opacity = '0.35';
+    backBtn.style.opacity = history.length > 1 ? '' : '0.35';
     fwdBtn.style.opacity = canGoForward ? '' : '0.35';
     (fwdBtn as HTMLButtonElement).disabled = !canGoForward;
   }
 
-  // Track: when user goes back (popstate), there's forward history
-  window.addEventListener('popstate', () => { canGoForward = true; updateNavButtons(); }, { once: true });
+  // When leaving search (going back), set flag so next render knows forward exists
+  window.addEventListener('popstate', () => {
+    if (!location.hash.startsWith('#search')) {
+      sessionStorage.setItem(FWD_KEY, '1');
+    }
+  });
 
   updateNavButtons();
 
   // ---- Header row: nav buttons + title ----
   const titleBar = document.createElement('div');
   titleBar.className = 'search-nav-bar';
-  titleBar.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:20px;';
+  titleBar.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:10px;';
 
   navBar.appendChild(backBtn);
   navBar.appendChild(fwdBtn);
