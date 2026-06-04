@@ -27,6 +27,7 @@ export class SwipeBanner {
   private dragStartX = 0;
   private loaded = false;
   private narrow: boolean;
+  private _touchSnapped = false;
 
   constructor(container: HTMLElement, interval = 4000) {
     this.container = container;
@@ -281,22 +282,29 @@ export class SwipeBanner {
         this.snapCurrent();
         this.scrollToCurrent(true);
         this.dragging = false;
+        // On mobile, suppress scroll-timer snap since we already snapped
+        this._touchSnapped = true;
       }
       this.startAuto();
     });
 
-    // Trackpad scroll → snap after 2s idle
-    let t: number | null = null;
+    // Trackpad / mousewheel scroll
+    // Desktop: snap after 2s idle (trackpad momentum)
+    // Mobile: snap quickly after scroll settles, unless touch already snapped
+    let scrollTimer: number | null = null;
     this.viewport.addEventListener('scroll', () => {
       if (this.dragging) return;
+      // Touch already handled snap — skip this scroll cycle
+      if (this._touchSnapped) { this._touchSnapped = false; return; }
       this.stopAuto();
-      if (t) clearTimeout(t);
-      t = window.setTimeout(() => {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      const delay = this.narrow ? 150 : 2000;
+      scrollTimer = window.setTimeout(() => {
         this.snapCurrent();
         this.scrollToCurrent(true);
         this.renderDots();
         this.startAuto();
-      }, 2000);
+      }, delay);
     }, { passive: true });
   }
 

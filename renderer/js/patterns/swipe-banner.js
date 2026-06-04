@@ -17,6 +17,7 @@ export class SwipeBanner {
         this.dragBase = 0;
         this.dragStartX = 0;
         this.loaded = false;
+        this._touchSnapped = false;
         this.container = container;
         this.interval = interval;
         this.narrow = this.isNarrow();
@@ -248,23 +249,33 @@ export class SwipeBanner {
                 this.snapCurrent();
                 this.scrollToCurrent(true);
                 this.dragging = false;
+                // On mobile, suppress scroll-timer snap since we already snapped
+                this._touchSnapped = true;
             }
             this.startAuto();
         });
-        // Trackpad scroll → snap after 2s idle
-        let t = null;
+        // Trackpad / mousewheel scroll
+        // Desktop: snap after 2s idle (trackpad momentum)
+        // Mobile: snap quickly after scroll settles, unless touch already snapped
+        let scrollTimer = null;
         this.viewport.addEventListener('scroll', () => {
             if (this.dragging)
                 return;
+            // Touch already handled snap — skip this scroll cycle
+            if (this._touchSnapped) {
+                this._touchSnapped = false;
+                return;
+            }
             this.stopAuto();
-            if (t)
-                clearTimeout(t);
-            t = window.setTimeout(() => {
+            if (scrollTimer)
+                clearTimeout(scrollTimer);
+            const delay = this.narrow ? 150 : 2000;
+            scrollTimer = window.setTimeout(() => {
                 this.snapCurrent();
                 this.scrollToCurrent(true);
                 this.renderDots();
                 this.startAuto();
-            }, 2000);
+            }, delay);
         }, { passive: true });
     }
     // ==================== Resize ====================
