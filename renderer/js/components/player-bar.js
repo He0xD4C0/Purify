@@ -6,10 +6,12 @@ export function initPlayerBar() {
     const bar = document.getElementById('player-bar');
     if (!bar)
         return;
+    // SVG placeholder icon — simple music note
+    const PLACEHOLDER_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
     // Build bar UI once
     bar.innerHTML = `
     <div class="pb-progress"></div>
-    <img class="pb-cover" src="" alt="">
+    <div class="pb-cover">${PLACEHOLDER_SVG}</div>
     <div class="pb-info">
       <div class="pb-title">未在播放</div>
       <div class="pb-artist">点击此处打开播放器</div>
@@ -33,9 +35,11 @@ export function initPlayerBar() {
             return;
         }
         setPlaceholder(false);
+        // Replace placeholder SVG with actual cover image
         const cover = bar.querySelector('.pb-cover');
         if (cover) {
-            cover.src = track.album.picUrl ? `${track.album.picUrl}?param=90y90` : '';
+            const picUrl = track.album.picUrl ? `${track.album.picUrl}?param=90y90` : '';
+            cover.innerHTML = `<img src="${picUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
         }
         const title = bar.querySelector('.pb-title');
         if (title)
@@ -76,7 +80,7 @@ export function initPlayerBar() {
         if (empty) {
             const cover = bar.querySelector('.pb-cover');
             if (cover)
-                cover.src = '';
+                cover.innerHTML = PLACEHOLDER_SVG;
             const title = bar.querySelector('.pb-title');
             if (title)
                 title.textContent = '未在播放';
