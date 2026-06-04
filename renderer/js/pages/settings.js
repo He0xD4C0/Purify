@@ -1,18 +1,10 @@
 // Settings pages using ColumnNav pattern
 import { ColumnNav } from '../patterns/column-nav.js';
-import { bus } from '../core/event-bus.js';
-import { state } from '../core/app.js';
-import { renderLoginPanel } from '../components/login-panel.js';
 export function renderSettings(container) {
     container.innerHTML = '';
     const navRoot = document.createElement('div');
     container.appendChild(navRoot);
     new ColumnNav(navRoot, [
-        {
-            id: 'account',
-            label: '账户',
-            render: renderSettingsAccount,
-        },
         {
             id: 'playback',
             label: '播放',
@@ -103,37 +95,6 @@ function settingsPage(sections) {
         el.appendChild(row);
     });
     return el;
-}
-function renderSettingsAccount(container) {
-    if (state.loggedIn) {
-        const profile = state.userProfile;
-        const vipLabel = state.vipType === 'svip' ? '黑胶SVIP' : state.vipType === 'vip' ? 'VIP' : '普通';
-        container.appendChild(settingsPage([
-            { label: '昵称', content: profile.nickname },
-            { label: 'VIP 等级', content: vipLabel },
-            { label: '退出登录', content: '', action: () => {
-                    if (confirm('确定退出登录？')) {
-                        localStorage.removeItem('purify_cookie');
-                        state.loggedIn = false;
-                        state.userProfile = null;
-                        state.vipType = 'none';
-                        bus.emit('auth:logout');
-                        renderSettingsAccount(container);
-                    }
-                } },
-        ]));
-    }
-    else {
-        container.innerHTML = `
-      <p class="text-muted" style="margin-bottom:12px;">未登录</p>
-      <button class="btn-login-prompt">立即登录</button>
-    `;
-        container.querySelector('.btn-login-prompt')?.addEventListener('click', () => {
-            const c = document.getElementById('content');
-            if (c)
-                renderLoginPanel(c);
-        });
-    }
 }
 function renderSettingsPlayback(container) {
     const quality = localStorage.getItem('purify_quality') || 'lossless';
