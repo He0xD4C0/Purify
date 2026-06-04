@@ -536,8 +536,6 @@
 
 /* ===== Responsive: Mobile (width < 900px) ===== */
 @media (max-width: 899px) {
-  .search-nav-btn { display: none; }
-
   #content {
     padding: 12px;
   }
