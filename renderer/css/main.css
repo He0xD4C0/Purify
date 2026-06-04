@@ -302,40 +302,33 @@ html, body {
   line-height: 1.3;
 }
 
-/* ===== Banner ===== */
-#banner-container {
+/* ===== Banner — horizontal sliding carousel, image-determined height ===== */
+.banner-viewport {
   position: relative;
   width: 100%;
-  max-width: 100%;
-  aspect-ratio: 2.7 / 1;
-  max-height: 360px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-bottom: 20px;
   background: var(--bg-tertiary);
 }
 
-#banner-container .banner-slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transform: scale(1.02);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+.banner-track {
+  display: flex;
+  will-change: transform;
+}
+
+.banner-slide {
+  flex: 0 0 100%;
   cursor: pointer;
 }
 
-#banner-container .banner-slide.active {
-  opacity: 1;
-  transform: scale(1);
-}
-
-#banner-container .banner-slide img {
+.banner-slide img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
+  pointer-events: none;
 }
 
-#banner-container .banner-dots {
+.banner-dots {
   position: absolute;
   bottom: 12px;
   left: 50%;
@@ -345,7 +338,7 @@ html, body {
   z-index: 2;
 }
 
-#banner-container .banner-dot {
+.banner-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -356,7 +349,7 @@ html, body {
   transition: all 0.3s ease;
 }
 
-#banner-container .banner-dot.active {
+.banner-dot.active {
   background: var(--accent);
   width: 20px;
   border-radius: 4px;

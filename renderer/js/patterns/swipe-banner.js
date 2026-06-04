@@ -1,65 +1,65 @@
-// Carousel banner with auto-advance, dot indicators, and touch swipe
+// Horizontal sliding banner carousel with touch swipe
 export class SwipeBanner {
     constructor(container, interval = 4000) {
+        this.track = null;
+        this.dots = null;
         this.items = [];
         this.current = 0;
         this.timer = null;
         this.touchStartX = 0;
         this.touchStartY = 0;
+        this.isDragging = false;
+        this.dragOffset = 0;
         this.container = container;
         this.interval = interval;
-        this.container.className = 'swipe-banner';
+        this.buildDOM();
         this.bindTouch();
+    }
+    buildDOM() {
+        this.container.innerHTML = '';
+        const viewport = document.createElement('div');
+        viewport.className = 'banner-viewport';
+        this.track = document.createElement('div');
+        this.track.className = 'banner-track';
+        viewport.appendChild(this.track);
+        this.dots = document.createElement('div');
+        this.dots.className = 'banner-dots';
+        viewport.appendChild(this.dots);
+        this.container.appendChild(viewport);
     }
     setItems(items) {
         this.items = items;
         this.current = 0;
-        this.render();
+        this.renderSlides();
+        this.updatePosition(false);
+        this.renderDots();
         this.startAuto();
     }
-    bindTouch() {
-        this.container.addEventListener('touchstart', (e) => {
-            this.touchStartX = e.touches[0].clientX;
-            this.touchStartY = e.touches[0].clientY;
-            this.stopAuto();
-        }, { passive: true });
-        this.container.addEventListener('touchend', (e) => {
-            const dx = e.changedTouches[0].clientX - this.touchStartX;
-            const dy = e.changedTouches[0].clientY - this.touchStartY;
-            // Only trigger swipe if horizontal movement > vertical and > 50px
-            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
-                if (dx > 0) {
-                    this.prev();
-                }
-                else {
-                    this.next();
-                }
-            }
-            this.startAuto();
-        });
-    }
-    render() {
-        this.container.innerHTML = '';
-        const slides = document.createElement('div');
-        slides.id = 'banner-container';
+    renderSlides() {
+        if (!this.track)
+            return;
+        this.track.innerHTML = '';
         this.items.forEach((item, i) => {
             const slide = document.createElement('div');
-            slide.className = 'banner-slide' + (i === this.current ? ' active' : '');
+            slide.className = 'banner-slide';
             slide.addEventListener('click', () => {
-                if (item.url)
+                if (!this.isDragging && item.url) {
                     window.open(item.url, '_blank');
+                }
             });
             const img = document.createElement('img');
             img.src = item.imageUrl;
             img.alt = item.typeTitle || '';
-            img.loading = 'lazy';
             img.draggable = false;
+            img.loading = 'lazy';
             slide.appendChild(img);
-            slides.appendChild(slide);
+            this.track.appendChild(slide);
         });
-        // Dots — pill style active indicator
-        const dots = document.createElement('div');
-        dots.className = 'banner-dots';
+    }
+    renderDots() {
+        if (!this.dots)
+            return;
+        this.dots.innerHTML = '';
         this.items.forEach((_, i) => {
             const dot = document.createElement('button');
             dot.className = 'banner-dot' + (i === this.current ? ' active' : '');
@@ -67,17 +67,21 @@ export class SwipeBanner {
                 e.stopPropagation();
                 this.goTo(i);
             });
-            dots.appendChild(dot);
+            this.dots.appendChild(dot);
         });
-        slides.appendChild(dots);
-        this.container.appendChild(slides);
+    }
+    updatePosition(animate) {
+        if (!this.track)
+            return;
+        this.track.style.transition = animate ? 'transform 0.4s ease' : 'none';
+        this.track.style.transform = `translateX(-${this.current * 100}%)`;
+        // Update dots
+        const dots = this.container.querySelectorAll('.banner-dot');
+        dots.forEach((d, i) => d.classList.toggle('active', i === this.current));
     }
     goTo(index) {
         this.current = index;
-        const slides = this.container.querySelectorAll('.banner-slide');
-        const dots = this.container.querySelectorAll('.banner-dot');
-        slides.forEach((s, i) => s.classList.toggle('active', i === index));
-        dots.forEach((d, i) => d.classList.toggle('active', i === index));
+        this.updatePosition(true);
         this.resetAuto();
     }
     next() {
@@ -85,6 +89,44 @@ export class SwipeBanner {
     }
     prev() {
         this.goTo((this.current - 1 + this.items.length) % this.items.length);
+    }
+    bindTouch() {
+        if (!this.track)
+            return;
+        this.track.addEventListener('touchstart', (e) => {
+            this.touchStartX = e.touches[0].clientX;
+            this.touchStartY = e.touches[0].clientY;
+            this.isDragging = false;
+            this.dragOffset = 0;
+            this.stopAuto();
+        }, { passive: true });
+        this.track.addEventListener('touchmove', (e) => {
+            const dx = e.touches[0].clientX - this.touchStartX;
+            const dy = Math.abs(e.touches[0].clientY - this.touchStartY);
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+                this.isDragging = true;
+                e.preventDefault();
+                this.dragOffset = dx;
+                this.track.style.transition = 'none';
+                const pct = -(this.current * 100) + (dx / this.container.offsetWidth) * 100;
+                this.track.style.transform = `translateX(${pct}%)`;
+            }
+        }, { passive: false });
+        this.track.addEventListener('touchend', () => {
+            if (this.isDragging) {
+                if (Math.abs(this.dragOffset) > 60) {
+                    if (this.dragOffset > 0)
+                        this.prev();
+                    else
+                        this.next();
+                }
+                else {
+                    this.updatePosition(true);
+                }
+                this.isDragging = false;
+            }
+            this.startAuto();
+        });
     }
     startAuto() {
         if (this.timer)

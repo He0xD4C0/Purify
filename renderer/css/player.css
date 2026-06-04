@@ -494,7 +494,7 @@
 @media (min-width: 900px) {
   #app {
     display: grid;
-    grid-template-columns: 72px 1fr;
+    grid-template-columns: auto 1fr;
     grid-template-rows: 1fr auto;
     grid-template-areas:
       "nav content"
@@ -505,25 +505,32 @@
     grid-area: nav;
     flex-direction: column;
     justify-content: flex-start;
-    width: 72px;
-    min-width: 72px;
+    width: auto;
+    min-width: auto;
     height: 100%;
     min-height: 0;
-    padding: 12px 0;
-    gap: 4px;
+    padding: 16px 12px;
+    gap: 2px;
     border-top: none;
     border-right: 1px solid var(--border);
     order: 0;
   }
 
   #navbar .nav-tab {
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 8px;
-    font-size: 11px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
     width: 100%;
-    text-align: center;
-    border-radius: 0;
+    text-align: left;
+    border-radius: var(--radius);
+    justify-content: flex-start;
+    white-space: nowrap;
+  }
+
+  #navbar .nav-tab svg {
+    flex-shrink: 0;
   }
 
   #content {
