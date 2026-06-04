@@ -62,6 +62,7 @@ html, body {
   width: 100%;
   position: relative;
   padding-bottom: 0;
+  background: transparent;
 }
 
 /* ===== Navbar — bottom on mobile, left sidebar on desktop ===== */
@@ -150,6 +151,7 @@ html, body {
 /* ===== Search Bar (input + suggestions) ===== */
 .search-bar {
   position: relative;
+  background: transparent;
 }
 
 .search-bar input {
