@@ -138,6 +138,7 @@ export async function init(): Promise<void> {
   router.register('library', () => navigateTo('library'));
   router.register('account', () => navigateTo('account'));
   router.register('settings', () => navigateTo('settings'));
+  router.register('search', () => navigateTo(router.current())); // passes full hash incl. ?q=
 
   // Player overlay — available globally on all pages
   bus.on('player:open-overlay', () => showPlayerOverlay());
