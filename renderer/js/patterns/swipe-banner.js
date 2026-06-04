@@ -1,348 +1,301 @@
 // Horizontal sliding banner carousel with touch swipe
-// Desktop: fixed image height 220px, centering pads, gradient masks
+// Desktop (>=900px): fixed image height 220px, centering, gradient masks
 // Mobile (<900px): image fills viewport width, proportional height, no masks
-const BANNER_IMG_HEIGHT = 220;
-const MOBILE_BREAKPOINT = 900;
+const IMG_H = 220;
+const BP = 900;
 export class SwipeBanner {
     constructor(container, interval = 4000) {
         this.track = null;
         this.dots = null;
         this.viewport = null;
-        this.maskLeft = null;
-        this.maskRight = null;
+        this.maskL = null;
+        this.maskR = null;
         this.items = [];
         this.current = 0;
         this.timer = null;
-        this.touchStartX = 0;
-        this.touchStartY = 0;
-        this.isDragging = false;
-        this.dragOffset = 0;
+        this.dragging = false;
+        this.dragBase = 0;
+        this.dragStartX = 0;
         this.loaded = false;
         this.container = container;
         this.interval = interval;
-        this.wasNarrow = this.isNarrow();
+        this.narrow = this.isNarrow();
         this.container.style.position = 'relative';
         this.buildDOM();
         this.bindTouch();
         this.bindResize();
     }
-    isNarrow() {
-        return this.container.offsetWidth < MOBILE_BREAKPOINT;
-    }
+    isNarrow() { return this.container.offsetWidth < BP; }
+    // ==================== DOM ====================
     buildDOM() {
         this.container.innerHTML = '';
         this.viewport = document.createElement('div');
         this.viewport.className = 'banner-viewport';
-        if (this.isNarrow()) {
-            this.viewport.classList.add('mobile');
-        }
         this.track = document.createElement('div');
         this.track.className = 'banner-track';
         this.viewport.appendChild(this.track);
-        // Gradient masks — desktop only
-        this.maskLeft = document.createElement('div');
-        this.maskLeft.className = 'banner-mask banner-mask-left';
-        this.maskRight = document.createElement('div');
-        this.maskRight.className = 'banner-mask banner-mask-right';
+        this.maskL = document.createElement('div');
+        this.maskL.className = 'banner-mask banner-mask-left';
+        this.maskR = document.createElement('div');
+        this.maskR.className = 'banner-mask banner-mask-right';
         this.dots = document.createElement('div');
         this.dots.className = 'banner-dots';
-        this.container.appendChild(this.maskLeft);
+        this.container.appendChild(this.maskL);
         this.container.appendChild(this.viewport);
-        this.container.appendChild(this.maskRight);
+        this.container.appendChild(this.maskR);
         this.container.appendChild(this.dots);
-        this.updateMaskVisibility();
+        this.syncMaskVis();
     }
-    updateMaskVisibility() {
-        if (!this.maskLeft || !this.maskRight)
-            return;
-        const hide = this.isNarrow();
-        this.maskLeft.style.display = hide ? 'none' : '';
-        this.maskRight.style.display = hide ? 'none' : '';
-    }
+    // ==================== Items ====================
     setItems(items) {
         this.items = items;
         this.current = 0;
         this.loaded = false;
-        this.renderSlides();
+        this.stopAuto();
+        this.buildSlides();
     }
-    imgHeight() {
-        // Mobile: image height = viewport width / ratio, capped reasonably
-        // We compute per-image in onload
-        return this.isNarrow() ? 0 : BANNER_IMG_HEIGHT;
-    }
-    renderSlides() {
-        if (!this.track)
+    buildSlides() {
+        if (!this.track || !this.viewport)
             return;
         this.track.innerHTML = '';
-        // Remove old spacers
-        this.track.style.paddingLeft = '';
-        const narrow = this.isNarrow();
-        let loadedCount = 0;
+        this.clearPads();
+        const narrow = this.narrow;
+        let done = 0;
         this.items.forEach((item, i) => {
             const slide = document.createElement('div');
             slide.className = 'banner-slide';
             slide.addEventListener('click', () => {
-                if (!this.isDragging && item.url) {
+                if (!this.dragging && item.url)
                     window.open(item.url, '_blank');
-                }
             });
             const img = document.createElement('img');
             img.src = item.imageUrl;
             img.alt = item.typeTitle || '';
             img.draggable = false;
             img.onload = () => {
-                const ratio = img.naturalWidth / img.naturalHeight;
-                if (narrow) {
-                    // Mobile: image fills viewport width, height proportional
-                    const vw = this.viewport.offsetWidth;
-                    img.style.width = `${vw}px`;
-                    img.style.height = `${Math.round(vw / ratio)}px`;
-                }
-                else {
-                    // Desktop: fixed height, width from ratio
-                    img.style.height = `${BANNER_IMG_HEIGHT}px`;
-                    img.style.width = `${Math.round(BANNER_IMG_HEIGHT * ratio)}px`;
-                }
-                loadedCount++;
-                if (loadedCount === this.items.length && !this.loaded) {
+                this.sizeImg(img, narrow);
+                done++;
+                if (done === this.items.length && !this.loaded) {
                     this.loaded = true;
-                    // Wait one frame for layout
-                    requestAnimationFrame(() => {
-                        if (narrow) {
-                            // No centering pads on mobile
-                        }
-                        else {
-                            this.addCenteringPads();
-                        }
-                        this.renderDots();
-                        this.updatePosition(false);
-                        this.startAuto();
-                    });
+                    requestAnimationFrame(() => this.onAllLoaded());
                 }
             };
             img.onerror = () => {
-                loadedCount++;
-                if (loadedCount === this.items.length && !this.loaded) {
+                done++;
+                if (done === this.items.length && !this.loaded) {
                     this.loaded = true;
-                    requestAnimationFrame(() => {
-                        this.renderDots();
-                        this.updatePosition(false);
-                        this.startAuto();
-                    });
+                    requestAnimationFrame(() => this.onAllLoaded());
                 }
             };
             slide.appendChild(img);
             this.track.appendChild(slide);
         });
     }
+    sizeImg(img, narrow) {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        if (narrow) {
+            const vw = this.viewport.offsetWidth;
+            img.style.width = `${vw}px`;
+            img.style.height = `${Math.round(vw / ratio)}px`;
+        }
+        else {
+            img.style.height = `${IMG_H}px`;
+            img.style.width = `${Math.round(IMG_H * ratio)}px`;
+        }
+    }
+    onAllLoaded() {
+        this.setPads();
+        this.renderDots();
+        this.goTo(this.current);
+        this.startAuto();
+    }
+    // ==================== Centering pads ====================
+    /** Ensure first & last slide can be centered. Recalculates every call. */
+    setPads() {
+        if (!this.track || !this.viewport || this.narrow)
+            return;
+        const slides = this.track.querySelectorAll('.banner-slide');
+        if (slides.length === 0)
+            return;
+        const vw = this.viewport.offsetWidth;
+        const firstW = slides[0].offsetWidth;
+        const lastW = slides[slides.length - 1].offsetWidth;
+        this.track.style.paddingLeft = `${Math.max(0, (vw - firstW) / 2)}px`;
+        // trailing spacer
+        this.clearPads();
+        const spacer = document.createElement('div');
+        spacer.className = 'banner-spacer';
+        spacer.style.cssText = `flex-shrink:0; width:${Math.max(0, (vw - lastW) / 2)}px; height:1px;`;
+        this.track.appendChild(spacer);
+    }
+    clearPads() {
+        if (!this.track)
+            return;
+        this.track.querySelectorAll('.banner-spacer').forEach((s) => s.remove());
+    }
+    // ==================== Navigation ====================
+    goTo(index) {
+        this.current = index;
+        this.scrollToCurrent(true);
+        this.resetAuto();
+    }
+    next() {
+        this.snapCurrent();
+        this.goTo((this.current + 1) % this.items.length);
+    }
+    prev() {
+        this.snapCurrent();
+        this.goTo((this.current - 1 + this.items.length) % this.items.length);
+    }
+    /** Scroll so the current slide is centered in the viewport */
+    scrollToCurrent(animate) {
+        if (!this.viewport || !this.track)
+            return;
+        const slides = this.track.querySelectorAll('.banner-slide');
+        const slide = slides[this.current];
+        if (!slide)
+            return;
+        // Center: slide's midpoint should align with viewport midpoint
+        const slideMid = slide.offsetLeft + slide.offsetWidth / 2;
+        const vpMid = this.viewport.offsetWidth / 2;
+        this.viewport.style.scrollBehavior = animate ? 'smooth' : 'auto';
+        this.viewport.scrollLeft = slideMid - vpMid;
+        if (!this.narrow)
+            this.updateMasks();
+        this.updateDots();
+    }
+    snapCurrent() {
+        if (!this.viewport || !this.track)
+            return;
+        const scrollLeft = this.viewport.scrollLeft;
+        const vw = this.viewport.offsetWidth;
+        const padLeft = parseInt(getComputedStyle(this.track).paddingLeft) || 0;
+        const slides = this.track.querySelectorAll('.banner-slide');
+        if (slides.length === 0)
+            return;
+        let best = 0, bestDist = Infinity, cumX = padLeft - scrollLeft;
+        for (let i = 0; i < slides.length; i++) {
+            const w = slides[i].offsetWidth;
+            const d = Math.abs(cumX + w / 2 - vw / 2);
+            if (d < bestDist) {
+                bestDist = d;
+                best = i;
+            }
+            cumX += w;
+        }
+        this.current = best;
+    }
+    // ==================== Masks (desktop) ====================
+    updateMasks() {
+        if (!this.viewport || !this.track)
+            return;
+        const slides = this.track.querySelectorAll('.banner-slide');
+        const slide = slides[this.current];
+        if (!slide)
+            return;
+        const maskW = Math.max(0, (this.viewport.offsetWidth - slide.offsetWidth) / 2);
+        if (this.maskL)
+            this.maskL.style.width = `${maskW}px`;
+        if (this.maskR)
+            this.maskR.style.width = `${maskW}px`;
+    }
+    syncMaskVis() {
+        const hide = this.narrow;
+        if (this.maskL)
+            this.maskL.style.display = hide ? 'none' : '';
+        if (this.maskR)
+            this.maskR.style.display = hide ? 'none' : '';
+    }
+    // ==================== Dots ====================
     renderDots() {
         if (!this.dots)
             return;
         this.dots.innerHTML = '';
         this.items.forEach((_, i) => {
-            const dot = document.createElement('button');
-            dot.className = 'banner-dot' + (i === this.current ? ' active' : '');
-            dot.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.goTo(i);
-            });
-            this.dots.appendChild(dot);
+            const d = document.createElement('button');
+            d.className = 'banner-dot' + (i === this.current ? ' active' : '');
+            d.addEventListener('click', (e) => { e.stopPropagation(); this.goTo(i); });
+            this.dots.appendChild(d);
         });
     }
-    updatePosition(animate) {
-        if (!this.track || !this.viewport)
+    updateDots() {
+        if (!this.dots)
             return;
-        const slides = this.track.querySelectorAll('.banner-slide');
-        if (slides.length === 0 || !slides[this.current])
-            return;
-        let scrollTarget = 0;
-        for (let i = 0; i < this.current; i++) {
-            scrollTarget += slides[i].offsetWidth;
-        }
-        this.viewport.style.scrollBehavior = animate ? 'smooth' : 'auto';
-        this.viewport.scrollLeft = scrollTarget;
-        // Update masks (desktop only)
-        if (!this.isNarrow())
-            this.updateMasks();
-        // Update dots
-        const dots = this.container.querySelectorAll('.banner-dot');
-        dots.forEach((d, i) => d.classList.toggle('active', i === this.current));
+        const all = this.dots.querySelectorAll('.banner-dot');
+        all.forEach((d, i) => d.classList.toggle('active', i === this.current));
     }
-    updateMasks() {
-        if (!this.viewport || !this.track)
-            return;
-        const slides = this.track.querySelectorAll('.banner-slide');
-        if (!slides[this.current])
-            return;
-        const currentSlide = slides[this.current];
-        const vw = this.viewport.offsetWidth;
-        const imageW = currentSlide.offsetWidth;
-        const maskW = Math.max(0, (vw - imageW) / 2);
-        if (this.maskLeft)
-            this.maskLeft.style.width = `${maskW}px`;
-        if (this.maskRight)
-            this.maskRight.style.width = `${maskW}px`;
-    }
-    addCenteringPads() {
-        if (!this.track || !this.viewport || this.isNarrow())
-            return;
-        const slides = this.track.querySelectorAll('.banner-slide');
-        if (slides.length === 0)
-            return;
-        const firstSlide = slides[0];
-        const lastSlide = slides[slides.length - 1];
-        const halfPad = Math.max(0, (this.viewport.offsetWidth - firstSlide.offsetWidth) / 2);
-        this.track.style.paddingLeft = `${halfPad}px`;
-        // Remove old spacer
-        const old = this.track.querySelector('.banner-spacer');
-        if (old)
-            old.remove();
-        const endPad = Math.max(0, (this.viewport.offsetWidth - lastSlide.offsetWidth) / 2);
-        const spacer = document.createElement('div');
-        spacer.className = 'banner-spacer';
-        spacer.style.cssText = `flex-shrink:0; width:${endPad}px; height:1px;`;
-        this.track.appendChild(spacer);
-    }
-    goTo(index) {
-        this.current = index;
-        this.updatePosition(true);
-        this.resetAuto();
-    }
-    next() {
-        this.syncCurrentFromScroll();
-        this.goTo((this.current + 1) % this.items.length);
-    }
-    prev() {
-        this.syncCurrentFromScroll();
-        this.goTo((this.current - 1 + this.items.length) % this.items.length);
-    }
-    syncCurrentFromScroll() {
-        if (!this.viewport || !this.track)
-            return;
-        const scrollLeft = this.viewport.scrollLeft;
-        const vw = this.viewport.offsetWidth;
-        const vpCenter = vw / 2;
-        const padLeft = parseInt(getComputedStyle(this.track).paddingLeft) || 0;
-        const slides = this.track.querySelectorAll('.banner-slide');
-        if (slides.length === 0)
-            return;
-        let bestIdx = 0;
-        let bestDist = Infinity;
-        let cumX = padLeft - scrollLeft;
-        for (let i = 0; i < slides.length; i++) {
-            const sw = slides[i].offsetWidth;
-            const center = cumX + sw / 2;
-            const dist = Math.abs(center - vpCenter);
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestIdx = i;
-            }
-            cumX += sw;
-        }
-        this.current = bestIdx;
-    }
+    // ==================== Touch / Scroll ====================
     bindTouch() {
         if (!this.track || !this.viewport)
             return;
         this.track.addEventListener('touchstart', (e) => {
-            this.touchStartX = e.touches[0].clientX;
-            this.touchStartY = e.touches[0].clientY;
-            this.isDragging = false;
-            this.dragOffset = 0;
+            this.dragStartX = e.touches[0].clientX;
+            this.dragging = false;
+            this.dragBase = this.viewport.scrollLeft;
             this.stopAuto();
         }, { passive: true });
         this.track.addEventListener('touchmove', (e) => {
-            const dx = e.touches[0].clientX - this.touchStartX;
-            const dy = Math.abs(e.touches[0].clientY - this.touchStartY);
-            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-                this.isDragging = true;
+            const dx = e.touches[0].clientX - this.dragStartX;
+            if (Math.abs(dx) > 10) {
+                this.dragging = true;
                 e.preventDefault();
-                this.dragOffset = dx;
-                const slides = this.track.querySelectorAll('.banner-slide');
-                let baseScroll = 0;
-                for (let i = 0; i < this.current && i < slides.length; i++) {
-                    baseScroll += slides[i].offsetWidth;
-                }
                 this.viewport.style.scrollBehavior = 'auto';
-                this.viewport.scrollLeft = baseScroll - dx;
+                this.viewport.scrollLeft = this.dragBase - dx;
             }
         }, { passive: false });
         this.track.addEventListener('touchend', () => {
-            if (this.isDragging) {
-                this.syncCurrentFromScroll();
-                this.updatePosition(true);
-                this.isDragging = false;
+            if (this.dragging) {
+                this.snapCurrent();
+                this.scrollToCurrent(true);
+                this.dragging = false;
             }
             this.startAuto();
         });
-        // Trackpad / mousewheel scroll (desktop)
-        let scrollTimer = null;
+        // Trackpad scroll → snap after 2s idle
+        let t = null;
         this.viewport.addEventListener('scroll', () => {
-            if (this.isDragging)
+            if (this.dragging)
                 return;
             this.stopAuto();
-            if (scrollTimer)
-                clearTimeout(scrollTimer);
-            scrollTimer = window.setTimeout(() => {
-                this.syncCurrentFromScroll();
-                this.updatePosition(true);
+            if (t)
+                clearTimeout(t);
+            t = window.setTimeout(() => {
+                this.snapCurrent();
+                this.scrollToCurrent(true);
                 this.renderDots();
                 this.startAuto();
             }, 2000);
         }, { passive: true });
     }
-    // ---- Resize: re-render when crossing the 900px breakpoint ----
+    // ==================== Resize ====================
     bindResize() {
         window.addEventListener('resize', () => {
-            const nowNarrow = this.isNarrow();
-            if (nowNarrow !== this.wasNarrow) {
-                this.wasNarrow = nowNarrow;
-                this.loaded = false;
+            const was = this.narrow;
+            this.narrow = this.isNarrow();
+            if (this.narrow !== was) {
+                // Crossed breakpoint — rebuild
                 this.stopAuto();
-                // Toggle mobile class on viewport
-                if (this.viewport) {
-                    this.viewport.classList.toggle('mobile', nowNarrow);
-                }
+                this.syncMaskVis();
                 if (this.items.length > 0) {
-                    this.renderSlides();
+                    this.loaded = false;
+                    this.buildSlides();
                 }
-                this.updateMaskVisibility();
             }
-            else if (this.loaded) {
-                // Same mode but viewport size changed — recalculate image sizes
-                this.recalcImageSizes();
-                if (!nowNarrow) {
-                    this.addCenteringPads();
-                }
-                else {
-                    this.track.style.paddingLeft = '';
-                    const old = this.track.querySelector('.banner-spacer');
-                    if (old)
-                        old.remove();
-                }
-                this.updatePosition(false);
+            else if (this.loaded && this.items.length > 0) {
+                // Same mode, different size — recalc
+                this.recalcAllImgSizes();
+                this.setPads();
+                // Re-center current slide
+                requestAnimationFrame(() => this.scrollToCurrent(false));
             }
         });
     }
-    recalcImageSizes() {
-        if (!this.viewport || !this.track)
+    recalcAllImgSizes() {
+        if (!this.track)
             return;
-        const narrow = this.isNarrow();
-        const imgs = this.track.querySelectorAll('img');
-        const vw = this.viewport.offsetWidth;
-        imgs.forEach((img) => {
-            if (narrow && img.naturalWidth > 0) {
-                const ratio = img.naturalWidth / img.naturalHeight;
-                img.style.width = `${vw}px`;
-                img.style.height = `${Math.round(vw / ratio)}px`;
-            }
-            else if (!narrow) {
-                img.style.height = `${BANNER_IMG_HEIGHT}px`;
-                const ratio = img.naturalWidth / img.naturalHeight;
-                img.style.width = `${Math.round(BANNER_IMG_HEIGHT * ratio)}px`;
-            }
-        });
+        this.track.querySelectorAll('img').forEach((img) => this.sizeImg(img, this.narrow));
     }
+    // ==================== Timer ====================
     startAuto() {
         if (this.timer)
             return;
@@ -354,12 +307,7 @@ export class SwipeBanner {
             this.timer = null;
         }
     }
-    resetAuto() {
-        this.stopAuto();
-        this.startAuto();
-    }
-    destroy() {
-        this.stopAuto();
-    }
+    resetAuto() { this.stopAuto(); this.startAuto(); }
+    destroy() { this.stopAuto(); }
 }
 //# sourceMappingURL=swipe-banner.js.map
