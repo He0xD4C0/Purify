@@ -117,10 +117,8 @@ export async function init() {
     bus.on('player:seek', (offset) => audioEngine.seek(offset));
     bus.on('player:prev', () => audioEngine.playPrev());
     bus.on('player:next', () => audioEngine.playNext());
-    // Handle playTrack event
-    bus.on('player:track-change', (track) => {
-        audioEngine.play(track);
-    });
+    // Seek-to (progress bar drag)
+    bus.on('player:seek-to', (time) => audioEngine.seekTo(time));
     // Start router
     router.start();
     // Keyboard shortcuts

@@ -56,13 +56,60 @@
   text-overflow: ellipsis;
 }
 
-#player-bar .pb-progress {
+/* Progress bar — draggable, hover-reactive */
+#player-bar .pb-progress-wrap {
   position: absolute;
-  top: -2px;
+  top: 0;
   left: 0;
-  height: 2px;
+  right: 0;
+  height: 8px;
+  z-index: 5;
+  cursor: pointer;
+}
+
+#player-bar .pb-progress-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform: translateY(-50%);
+  background: var(--bg-hover);
+  transition: height 0.15s ease;
+}
+
+#player-bar .pb-progress-wrap:hover .pb-progress-track,
+#player-bar .pb-progress-wrap.dragging .pb-progress-track {
+  height: 6px;
+}
+
+#player-bar .pb-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
   background: var(--accent);
-  transition: width 0.3s linear;
+  border-radius: 2px;
+  transition: width 0.15s linear;
+}
+
+#player-bar .pb-progress-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+#player-bar .pb-progress-wrap:hover .pb-progress-thumb,
+#player-bar .pb-progress-wrap.dragging .pb-progress-thumb {
+  opacity: 1;
 }
 
 #player-bar .pb-controls {
@@ -81,10 +128,15 @@
   background: none;
   border: none;
   color: var(--text-primary);
-  font-size: 18px;
   cursor: pointer;
   border-radius: 50%;
   transition: background var(--transition-fast);
+  padding: 0;
+}
+
+#player-bar .pb-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 #player-bar .pb-btn:hover {
@@ -109,7 +161,12 @@
   width: 40px;
   height: 40px;
   background: var(--accent);
-  font-size: 16px;
+  color: white;
+}
+
+#player-bar .pb-btn.play-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 #player-bar .pb-btn.play-btn:hover {

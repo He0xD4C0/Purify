@@ -133,8 +133,17 @@ class AudioEngine {
         return queue[nextIdx];
     }
     togglePlay() {
+        if (!this.audio.src) {
+            // No track loaded — attempt to play from queue
+            if (state.queue.length > 0 && state.queueIndex >= 0) {
+                const track = state.queue[state.queueIndex];
+                this.play(track);
+                bus.emit('player:track-change', track);
+            }
+            return;
+        }
         if (this.audio.paused) {
-            this.audio.play();
+            this.audio.play().catch((e) => console.warn('[Audio] play() rejected:', e));
         }
         else {
             this.audio.pause();

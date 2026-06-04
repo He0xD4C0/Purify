@@ -152,10 +152,8 @@ export async function init(): Promise<void> {
   bus.on('player:prev', () => audioEngine.playPrev());
   bus.on('player:next', () => audioEngine.playNext());
 
-  // Handle playTrack event
-  bus.on('player:track-change', (track: Track) => {
-    audioEngine.play(track);
-  });
+  // Seek-to (progress bar drag)
+  bus.on('player:seek-to', (time: number) => audioEngine.seekTo(time));
 
   // Start router
   router.start();
