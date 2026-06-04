@@ -14,6 +14,8 @@
   --vip-gold: #d4a843;
   --svip-purple: #9b59b6;
   --border: #1e1e30;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
   --radius: 8px;
   --radius-lg: 14px;
   --radius-pill: 24px;
@@ -144,7 +146,7 @@ html, body {
 
 #content::-webkit-scrollbar-thumb {
   background: var(--bg-hover);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 /* ===== Search Bar (input + suggestions) ===== */
@@ -246,7 +248,7 @@ html, body {
 .song-list .song-row .song-cover {
   width: 40px;
   height: 40px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
   background: var(--bg-tertiary);
 }
@@ -254,7 +256,7 @@ html, body {
 .song-list .song-row .song-cover-placeholder {
   width: 40px;
   height: 40px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--bg-tertiary);
   display: flex;
   align-items: center;
@@ -294,7 +296,7 @@ html, body {
 .music-badge {
   display: inline-block;
   padding: 1px 6px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -424,7 +426,7 @@ html, body {
 .banner-dot.active {
   background: var(--accent);
   width: 20px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 /* ===== Section Headers ===== */

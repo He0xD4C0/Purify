@@ -14,17 +14,6 @@ export function renderPlaylistCard(playlist, onClick) {
     const title = document.createElement('div');
     title.className = 'card-title';
     title.textContent = playlist.name;
-    // Play count
-    if (playlist.playCount) {
-        const count = document.createElement('div');
-        count.className = 'card-sub';
-        count.style.cssText = 'font-size:11px;color:var(--text-muted);margin-top:4px;';
-        const n = playlist.playCount > 10000
-            ? `${(playlist.playCount / 10000).toFixed(1)}万`
-            : String(playlist.playCount);
-        count.textContent = `▶ ${n}`;
-        card.appendChild(count);
-    }
     card.appendChild(cover);
     card.appendChild(title);
     card.addEventListener('click', onClick);
