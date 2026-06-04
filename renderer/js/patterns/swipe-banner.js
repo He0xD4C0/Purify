@@ -242,6 +242,9 @@ export class SwipeBanner {
                 e.preventDefault();
                 this.viewport.style.scrollBehavior = 'auto';
                 this.viewport.scrollLeft = this.dragBase - dx;
+                // Real-time dot tracking during drag
+                this.snapCurrent();
+                this.updateDots();
             }
         }, { passive: false });
         this.track.addEventListener('touchend', () => {
@@ -255,25 +258,24 @@ export class SwipeBanner {
             this.startAuto();
         });
         // Trackpad / mousewheel scroll
-        // Desktop: snap after 2s idle (trackpad momentum)
-        // Mobile: snap quickly after scroll settles, unless touch already snapped
+        // Update dots in real-time; snap after idle delay (desktop: 2s, mobile: instant)
         let scrollTimer = null;
         this.viewport.addEventListener('scroll', () => {
             if (this.dragging)
                 return;
-            // Touch already handled snap — skip this scroll cycle
             if (this._touchSnapped) {
                 this._touchSnapped = false;
                 return;
             }
+            // Real-time dot tracking
+            this.snapCurrent();
+            this.updateDots();
             this.stopAuto();
             if (scrollTimer)
                 clearTimeout(scrollTimer);
             const delay = this.narrow ? 150 : 2000;
             scrollTimer = window.setTimeout(() => {
-                this.snapCurrent();
                 this.scrollToCurrent(true);
-                this.renderDots();
                 this.startAuto();
             }, delay);
         }, { passive: true });
