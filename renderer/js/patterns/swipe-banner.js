@@ -26,16 +26,16 @@ export class SwipeBanner {
         this.track = document.createElement('div');
         this.track.className = 'banner-track';
         this.viewport.appendChild(this.track);
-        // Gradient mask overlays — left and right
+        // Gradient masks — siblings of viewport, fixed overlay
         const maskLeft = document.createElement('div');
         maskLeft.className = 'banner-mask banner-mask-left';
-        this.viewport.appendChild(maskLeft);
         const maskRight = document.createElement('div');
         maskRight.className = 'banner-mask banner-mask-right';
-        this.viewport.appendChild(maskRight);
         this.dots = document.createElement('div');
         this.dots.className = 'banner-dots';
+        this.container.appendChild(maskLeft);
         this.container.appendChild(this.viewport);
+        this.container.appendChild(maskRight);
         this.container.appendChild(this.dots);
     }
     isTouchDevice() {
@@ -135,8 +135,8 @@ export class SwipeBanner {
         const vw = this.viewport.offsetWidth;
         const imageW = currentSlide.offsetWidth;
         const maskW = Math.max(0, (vw - imageW) / 2);
-        const maskLeft = this.viewport.querySelector('.banner-mask-left');
-        const maskRight = this.viewport.querySelector('.banner-mask-right');
+        const maskLeft = this.container.querySelector('.banner-mask-left');
+        const maskRight = this.container.querySelector('.banner-mask-right');
         if (maskLeft)
             maskLeft.style.width = `${maskW}px`;
         if (maskRight)
