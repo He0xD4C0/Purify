@@ -43,7 +43,7 @@ body:
       description: 此项目支持本地部署和云平台部署，您使用的是哪种方式？
       options:
         - 本机直接运行 (node / pm2)
-        - 本机 Docker 部署
+
         - Vercel
         - Heroku
         - Railway

@@ -12,6 +12,7 @@ import { renderPlaylistDetail } from '../pages/playlist.js';
 import { renderSettings } from '../pages/settings.js';
 import { renderSearch } from '../pages/search.js';
 import { renderPlayerPage } from '../pages/player-page.js';
+import { renderLoginPanel } from '../components/login-panel.js';
 import { audioEngine } from '../player/audio-engine.js';
 export const state = {
     loggedIn: false,
@@ -113,8 +114,23 @@ export async function init() {
     router.register('search', () => navigateTo(router.current())); // passes full hash incl. ?q=
     // Player overlay — available globally on all pages
     bus.on('player:open-overlay', () => showPlayerOverlay());
+    // Global login trigger — any page can request auth
+    bus.on('auth:require-login', () => {
+        const c = getContent();
+        renderLoginPanel(c, () => {
+            // On close, re-render current page
+            renderContent(state.currentPage);
+        });
+    });
     // Single shared page dispatch
-    bus.on('nav:page', (page) => renderContent(page));
+    bus.on('nav:page', (page) => {
+        renderContent(page);
+        // Hide search bar on account/settings pages
+        const searchBar = document.getElementById('search-bar');
+        if (searchBar) {
+            searchBar.style.display = (page === 'account' || page === 'settings') ? 'none' : '';
+        }
+    });
     // Handle player page close
     bus.on('player:page-close', () => {
         const page = document.getElementById('player-page');

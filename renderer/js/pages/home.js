@@ -5,7 +5,7 @@ import { api } from '../core/api.js';
 import { SwipeBanner } from '../patterns/swipe-banner.js';
 import { renderPlaylistGrid } from '../components/playlist-card.js';
 import { renderSongList } from '../components/song-list.js';
-import { renderLoginPanel } from '../components/login-panel.js';
+import { bus } from '../core/event-bus.js';
 let banner;
 export function renderHome(container) {
     container.innerHTML = '';
@@ -66,9 +66,7 @@ async function loadDaily() {
       </div>
     `;
         section.querySelector('.btn-login-prompt')?.addEventListener('click', () => {
-            const container = document.getElementById('content');
-            if (container)
-                renderLoginPanel(container);
+            bus.emit('auth:require-login');
         });
         return;
     }

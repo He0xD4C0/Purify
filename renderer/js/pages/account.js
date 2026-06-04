@@ -1,10 +1,10 @@
-// Account page — user profile, VIP status, stats, quick links, logout
+// Account page — profile, stats, settings with sub-page navigation
 import { router } from '../core/router.js';
 import { bus } from '../core/event-bus.js';
 import { state, clearCookie } from '../core/app.js';
-import { renderLoginPanel } from '../components/login-panel.js';
 import { api } from '../core/api.js';
-// ---- Styles (injected once) ----
+let activeSubPage = 'main';
+// ---- Styles ----
 let stylesInjected = false;
 function injectStyles() {
     if (stylesInjected)
@@ -12,154 +12,178 @@ function injectStyles() {
     stylesInjected = true;
     const s = document.createElement('style');
     s.textContent = `
-    .acct-card {
-      display: flex; align-items: center; gap: 18px;
-      padding: 24px; margin-bottom: 20px;
-      background: var(--bg-secondary); border-radius: var(--radius-lg);
-      border: 1px solid var(--border);
+    .acct-hero {
+      text-align: center; padding: 32px 20px 24px;
     }
-    .acct-avatar {
-      width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
-      flex-shrink: 0; background: var(--bg-tertiary);
+    .acct-avatar-lg {
+      width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
+      background: var(--bg-tertiary);
     }
-    .acct-name {
-      font-size: 22px; font-weight: 700; line-height: 1.2;
+    .acct-name-lg {
+      font-size: 22px; font-weight: 700; margin-top: 12px;
     }
-    .acct-level {
-      display: inline-block; padding: 1px 8px; border-radius: 3px;
-      font-size: 11px; font-weight: 600; margin-left: 6px;
-      background: var(--bg-hover); color: var(--text-secondary);
-    }
-    .acct-vip-badge {
-      display: inline-block; margin-top: 4px;
+    .acct-sub {
+      font-size: 13px; color: var(--text-muted); margin-top: 4px;
     }
     .acct-stats {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-      margin-bottom: 20px;
+      display: flex; justify-content: center; gap: 32px;
+      margin: 20px 0;
     }
     .acct-stat {
-      text-align: center; padding: 12px 8px;
-      background: var(--bg-secondary); border-radius: var(--radius);
-      border: 1px solid var(--border);
+      text-align: center;
     }
     .acct-stat-num {
-      font-size: 20px; font-weight: 700; color: var(--text-primary);
+      font-size: 20px; font-weight: 700;
     }
     .acct-stat-label {
       font-size: 11px; color: var(--text-muted); margin-top: 2px;
     }
     .acct-section {
-      margin-bottom: 20px;
+      margin-bottom: 6px;
     }
     .acct-section-title {
-      font-size: 12px; color: var(--text-muted); text-transform: uppercase;
-      letter-spacing: 1px; margin-bottom: 8px; padding-left: 4px;
+      font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 1px; padding: 12px 16px 6px;
     }
-    .acct-menu-item {
-      display: flex; justify-content: space-between; align-items: center;
-      width: 100%; padding: 14px 16px;
-      background: var(--bg-secondary); border: none; border-radius: var(--radius);
-      color: var(--text-primary); font-size: 14px; cursor: pointer;
-      transition: background var(--transition-fast);
-      margin-bottom: 2px; text-align: left;
+    .acct-item {
+      display: flex; align-items: center;
+      padding: 14px 16px; margin: 1px 8px;
+      background: var(--bg-secondary); border-radius: var(--radius);
+      cursor: pointer; transition: background var(--transition-fast);
+      border: none; width: calc(100% - 16px); text-align: left;
+      color: var(--text-primary); font-size: 14px;
     }
-    .acct-menu-item:hover { background: var(--bg-hover); }
-    .acct-menu-item .acct-menu-icon { margin-right: 10px; }
-    .acct-menu-item .acct-menu-label { flex: 1; text-align: left; }
-    .acct-menu-item .acct-menu-arrow { color: var(--text-muted); font-size: 16px; }
-    .acct-menu-item.danger { color: #ff4444; }
-    .acct-menu-item.danger:hover { background: rgba(255,68,68,0.08); }
+    .acct-item:hover { background: var(--bg-hover); }
+    .acct-item .acct-item-icon { margin-right: 12px; font-size: 18px; }
+    .acct-item .acct-item-label { flex: 1; }
+    .acct-item .acct-item-value { color: var(--text-muted); font-size: 13px; margin-right: 8px; }
+    .acct-item .acct-item-arrow { color: var(--text-muted); font-size: 16px; }
+    .acct-item.danger { color: #ff4444; }
+    .acct-item.danger:hover { background: rgba(255,68,68,0.08); }
+    .acct-toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--bg-hover);
+      border: none; cursor: pointer; position: relative; transition: background var(--transition-fast);
+      flex-shrink: 0; }
+    .acct-toggle.on { background: var(--accent); }
+    .acct-toggle::after { content: ''; position: absolute; top: 2px; left: 2px;
+      width: 20px; height: 20px; border-radius: 50%; background: white;
+      transition: transform var(--transition-fast); }
+    .acct-toggle.on::after { transform: translateX(20px); }
+    .acct-placeholder {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 60px 20px; text-align: center;
+    }
+    .acct-placeholder svg { color: var(--text-muted); margin-bottom: 16px; }
+    .acct-btn-primary {
+      padding: 10px 32px; background: var(--accent); color: white;
+      border: none; border-radius: var(--radius-pill); font-size: 15px;
+      cursor: pointer; margin-top: 16px;
+    }
+    .acct-back-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; margin-bottom: 8px;
+      background: none; border: none; color: var(--text-secondary);
+      font-size: 14px; cursor: pointer;
+    }
+    .acct-back-btn:hover { color: var(--text-primary); }
   `;
     document.head.appendChild(s);
 }
 export function renderAccount(container) {
     injectStyles();
+    activeSubPage = 'main';
     container.innerHTML = '';
     if (!state.loggedIn) {
-        renderLoggedOut(container);
+        renderPlaceholder(container);
         return;
     }
-    renderLoggedIn(container);
+    renderMain(container);
 }
-// ============ Logged-out view ============
-function renderLoggedOut(container) {
+// ============ Placeholder (not logged in) ============
+function renderPlaceholder(container) {
     container.innerHTML = `
-    <div style="text-align:center;padding:40px 20px;">
-      <div style="font-size:64px;margin-bottom:16px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="64" height="64" style="color:var(--text-muted);">
-          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/>
-        </svg>
-      </div>
+    <div class="acct-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="72" height="72">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/>
+      </svg>
       <h2 style="font-size:20px;margin-bottom:8px;">登录 Purify</h2>
-      <p style="color:var(--text-muted);margin-bottom:24px;font-size:14px;">登录后可同步歌单、获取每日推荐</p>
+      <p style="color:var(--text-muted);font-size:14px;">登录后可同步歌单、获取每日推荐</p>
+      <button class="acct-btn-primary">立即登录</button>
     </div>
   `;
-    renderLoginPanel(container);
+    container.querySelector('.acct-btn-primary')?.addEventListener('click', () => {
+        bus.emit('auth:require-login');
+    });
 }
-// ============ Logged-in view ============
-function renderLoggedIn(container) {
+// ============ Main account page ============
+function renderMain(container) {
+    container.innerHTML = '';
     const profile = state.userProfile;
-    // ---- Profile card ----
-    const card = document.createElement('div');
-    card.className = 'acct-card';
-    card.innerHTML = `
-    <img class="acct-avatar" src="${profile.avatarUrl}?param=150y150" alt="">
-    <div>
-      <div class="acct-name">
-        ${profile.nickname}
-        <span class="acct-level" id="acct-level">--</span>
-      </div>
-      <div class="acct-vip-badge" id="acct-vip"></div>
-    </div>
+    // ---- Profile hero (centered) ----
+    const hero = document.createElement('div');
+    hero.className = 'acct-hero';
+    hero.innerHTML = `
+    <img class="acct-avatar-lg" src="${profile.avatarUrl}?param=200y200" alt="">
+    <div class="acct-name-lg">${profile.nickname}</div>
+    <div class="acct-sub" id="acct-vip-tag"></div>
   `;
-    container.appendChild(card);
-    // Render VIP badge
-    const vipEl = document.getElementById('acct-vip');
-    if (vipEl) {
-        const vipType = state.vipType;
-        if (vipType === 'svip') {
-            vipEl.innerHTML = '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;">黑胶 SVIP</span>';
-        }
-        else if (vipType === 'vip') {
-            vipEl.innerHTML = '<span class="music-badge vip" style="font-size:12px;padding:2px 10px;">VIP</span>';
-        }
-        else {
-            vipEl.innerHTML = '<span style="font-size:12px;color:var(--text-muted);">普通用户</span>';
-        }
+    container.appendChild(hero);
+    // VIP badge
+    const vipTag = document.getElementById('acct-vip-tag');
+    if (vipTag) {
+        const vt = state.vipType;
+        if (vt === 'svip')
+            vipTag.innerHTML = '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;">黑胶 SVIP</span>';
+        else if (vt === 'vip')
+            vipTag.innerHTML = '<span class="music-badge vip" style="font-size:12px;padding:2px 10px;">VIP</span>';
+        else
+            vipTag.textContent = '普通用户';
     }
-    // ---- Stats grid ----
+    // ---- Stats ----
     const stats = document.createElement('div');
     stats.className = 'acct-stats';
     stats.innerHTML = `
-    <div class="acct-stat"><div class="acct-stat-num" id="stat-follows">--</div><div class="acct-stat-label">关注</div></div>
-    <div class="acct-stat"><div class="acct-stat-num" id="stat-fans">--</div><div class="acct-stat-label">粉丝</div></div>
-    <div class="acct-stat"><div class="acct-stat-num" id="stat-playlists">--</div><div class="acct-stat-label">歌单</div></div>
-    <div class="acct-stat"><div class="acct-stat-num" id="stat-likes">--</div><div class="acct-stat-label">喜欢</div></div>
+    <div class="acct-stat"><div class="acct-stat-num" id="as-follows">--</div><div class="acct-stat-label">关注</div></div>
+    <div class="acct-stat"><div class="acct-stat-num" id="as-fans">--</div><div class="acct-stat-label">粉丝</div></div>
+    <div class="acct-stat"><div class="acct-stat-num" id="as-playlists">--</div><div class="acct-stat-label">歌单</div></div>
+    <div class="acct-stat"><div class="acct-stat-num" id="as-likes">--</div><div class="acct-stat-label">喜欢</div></div>
   `;
     container.appendChild(stats);
-    // Fetch stats async
     fetchUserStats();
-    // ---- Music library section ----
+    // ---- Music Library section ----
     const libSection = document.createElement('div');
     libSection.className = 'acct-section';
     libSection.innerHTML = '<div class="acct-section-title">音乐库</div>';
-    libSection.appendChild(menuItem('📚', '我的歌单', '', () => router.navigate('library')));
-    libSection.appendChild(menuItem('🕐', '最近播放', '', () => router.navigate('library')));
+    libSection.appendChild(acctItem('我的歌单', '', () => router.navigate('library')));
+    libSection.appendChild(acctItem('最近播放', '', () => router.navigate('library')));
     container.appendChild(libSection);
     // ---- Settings section ----
     const settSection = document.createElement('div');
     settSection.className = 'acct-section';
     settSection.innerHTML = '<div class="acct-section-title">设置</div>';
-    settSection.appendChild(menuItem('🔊', '播放设置', '', () => router.navigate('settings')));
-    settSection.appendChild(menuItem('🤖', 'AI 翻译', '', () => router.navigate('settings')));
-    settSection.appendChild(menuItem('ℹ️', '关于 Purify', '', () => router.navigate('settings')));
+    // Playback → sub-page
+    settSection.appendChild(acctItem('播放设置', '', () => showSubPage(container, 'playback')));
+    // AI Translate → sub-page
+    settSection.appendChild(acctItem('AI 翻译', '', () => showSubPage(container, 'ai-translate')));
+    // Appearance → sub-page
+    settSection.appendChild(acctItem('外观', '', () => showSubPage(container, 'appearance')));
+    // Cache → inline
+    settSection.appendChild(acctItemInline('清除缓存', '', () => {
+        Object.keys(localStorage).forEach(k => { if (k.startsWith('lyric_tr_'))
+            localStorage.removeItem(k); });
+        alert('缓存已清除');
+    }));
     container.appendChild(settSection);
+    // ---- About section ----
+    const aboutSection = document.createElement('div');
+    aboutSection.className = 'acct-section';
+    aboutSection.innerHTML = '<div class="acct-section-title">关于</div>';
+    aboutSection.appendChild(acctItem('关于 Purify', '', () => showSubPage(container, 'about')));
+    container.appendChild(aboutSection);
     // ---- Danger zone ----
     const dangerSection = document.createElement('div');
     dangerSection.className = 'acct-section';
     dangerSection.innerHTML = '<div class="acct-section-title">账户操作</div>';
-    const logoutBtn = menuItem('', '退出登录', 'danger');
-    logoutBtn.addEventListener('click', () => {
+    const logout = acctItem('退出登录', '', () => {
         clearCookie();
         state.loggedIn = false;
         state.userProfile = null;
@@ -167,60 +191,186 @@ function renderLoggedIn(container) {
         bus.emit('auth:logout');
         renderAccount(container);
     });
-    dangerSection.appendChild(logoutBtn);
+    logout.classList.add('danger');
+    dangerSection.appendChild(logout);
     container.appendChild(dangerSection);
 }
-// ============ Helpers ============
-function menuItem(icon, label, cls, onClick) {
-    const btn = document.createElement('button');
-    btn.className = 'acct-menu-item' + (cls ? ` ${cls}` : '');
-    btn.innerHTML = `
-    <span class="acct-menu-icon">${icon}</span>
-    <span class="acct-menu-label">${label}</span>
-    <span class="acct-menu-arrow">›</span>
+// ============ Sub-pages ============
+function showSubPage(container, page) {
+    activeSubPage = page;
+    container.innerHTML = '';
+    const backBtn = document.createElement('button');
+    backBtn.className = 'acct-back-btn';
+    backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg> 返回';
+    backBtn.addEventListener('click', () => { activeSubPage = 'main'; renderAccount(container); });
+    container.appendChild(backBtn);
+    switch (page) {
+        case 'playback':
+            renderPlaybackSub(container);
+            break;
+        case 'ai-translate':
+            renderAISub(container);
+            break;
+        case 'appearance':
+            renderAppearanceSub(container);
+            break;
+        case 'about':
+            renderAboutSub(container);
+            break;
+    }
+}
+function renderPlaybackSub(container) {
+    const quality = localStorage.getItem('purify_quality') || 'lossless';
+    const qualities = ['standard', 'higher', 'exhigh', 'lossless', 'hires'];
+    const crossfade = localStorage.getItem('purify_crossfade') === 'true';
+    container.appendChild(sectionTitle('音质与播放'));
+    let qIdx = qualities.indexOf(quality);
+    container.appendChild(acctItem('默认音质', quality, () => {
+        qIdx = (qIdx + 1) % qualities.length;
+        localStorage.setItem('purify_quality', qualities[qIdx]);
+        renderPlaybackSub(container);
+    }));
+    container.appendChild(acctToggle('自动播放下一首', crossfade, (v) => {
+        localStorage.setItem('purify_crossfade', String(v));
+    }));
+}
+function renderAISub(container) {
+    const enabled = localStorage.getItem('purify_ai_enabled') === 'true';
+    const apiKey = localStorage.getItem('purify_ai_key') || '';
+    const endpoint = localStorage.getItem('purify_ai_endpoint') || 'https://api.openai.com/v1/chat/completions';
+    const model = localStorage.getItem('purify_ai_model') || 'gpt-4o-mini';
+    container.appendChild(sectionTitle('AI 歌词翻译'));
+    container.appendChild(acctToggle('启用 AI 翻译', enabled, (v) => {
+        localStorage.setItem('purify_ai_enabled', String(v));
+    }));
+    // API Key, Endpoint, Model — inline text fields
+    const fields = document.createElement('div');
+    fields.style.cssText = 'padding:0 16px;';
+    fields.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">API Key</label>
+      <input id="ai-key" type="password" value="${apiKey}" placeholder="sk-..."
+        style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">API Endpoint</label>
+      <input id="ai-endpoint" type="text" value="${endpoint}"
+        style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Model</label>
+      <input id="ai-model" type="text" value="${model}"
+        style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;">
+    </div>
   `;
-    if (onClick)
-        btn.addEventListener('click', onClick);
+    container.appendChild(fields);
+    fields.querySelector('#ai-key')?.addEventListener('change', (e) => localStorage.setItem('purify_ai_key', e.target.value));
+    fields.querySelector('#ai-endpoint')?.addEventListener('change', (e) => localStorage.setItem('purify_ai_endpoint', e.target.value));
+    fields.querySelector('#ai-model')?.addEventListener('change', (e) => localStorage.setItem('purify_ai_model', e.target.value));
+}
+function renderAppearanceSub(container) {
+    const isDark = (localStorage.getItem('purify_theme') || 'dark') === 'dark';
+    container.appendChild(sectionTitle('主题'));
+    container.appendChild(acctToggle('深色主题', isDark, (v) => {
+        localStorage.setItem('purify_theme', v ? 'dark' : 'light');
+        applyTheme(v);
+    }));
+}
+function renderAboutSub(container) {
+    container.appendChild(sectionTitle('关于'));
+    const about = document.createElement('div');
+    about.style.cssText = 'text-align:center;padding:20px 16px;';
+    about.innerHTML = `
+    <h1 style="font-size:28px;margin-bottom:4px;">Purify</h1>
+    <p style="color:var(--text-muted);">v0.1.0</p>
+    <p style="color:var(--text-secondary);font-size:14px;line-height:1.8;margin-top:16px;">
+      网易云音乐第三方 Web 播放器<br>
+      Chrome-first · 匿名优先<br>
+      Powered by NeteaseCloudMusicApiEnhanced
+    </p>
+    <p style="color:var(--text-muted);font-size:12px;margin-top:12px;">
+      MIT License · 仅供学习交流
+    </p>
+  `;
+    container.appendChild(about);
+}
+// ============ Reusable items ============
+function sectionTitle(text) {
+    const el = document.createElement('div');
+    el.className = 'acct-section-title';
+    el.textContent = text;
+    return el;
+}
+function acctItem(label, value, onClick) {
+    const btn = document.createElement('button');
+    btn.className = 'acct-item';
+    btn.innerHTML = `
+    <span class="acct-item-label">${label}</span>
+    ${value ? `<span class="acct-item-value">${value}</span>` : ''}
+    <span class="acct-item-arrow">›</span>
+  `;
+    btn.addEventListener('click', onClick);
     return btn;
 }
+function acctItemInline(label, value, onClick) {
+    const btn = document.createElement('button');
+    btn.className = 'acct-item';
+    btn.innerHTML = `
+    <span class="acct-item-label">${label}</span>
+    ${value ? `<span class="acct-item-value">${value}</span>` : ''}
+  `;
+    btn.addEventListener('click', onClick);
+    return btn;
+}
+function acctToggle(label, checked, onChange) {
+    const row = document.createElement('div');
+    row.className = 'acct-item';
+    row.style.cursor = 'default';
+    row.innerHTML = `<span class="acct-item-label">${label}</span>`;
+    const toggle = document.createElement('button');
+    toggle.className = 'acct-toggle' + (checked ? ' on' : '');
+    toggle.addEventListener('click', () => {
+        const now = !toggle.classList.contains('on');
+        toggle.classList.toggle('on', now);
+        onChange(now);
+    });
+    row.appendChild(toggle);
+    row.addEventListener('mouseenter', () => { row.style.background = 'var(--bg-secondary)'; });
+    return row;
+}
+// ============ Stats ============
 async function fetchUserStats() {
     try {
         const uid = state.userProfile?.userId;
         if (!uid)
             return;
         const uidStr = String(uid);
-        // Fetch user subcount (playlist count, etc.)
-        const subRes = await api.userSubcount();
-        const subData = subRes.body || subRes;
-        if (subData) {
-            setStat('stat-playlists', String(subData.createdPlaylistCount || 0));
+        const sub = await api.userSubcount();
+        const d = sub.body || sub;
+        if (d)
+            setStat('as-playlists', String(d.createdPlaylistCount || 0));
+        const detail = await api.userDetail(uidStr);
+        const p = (detail.body || detail).profile;
+        if (p) {
+            setStat('as-follows', String(p.follows || 0));
+            setStat('as-fans', String(p.followeds || 0));
         }
-        // Fetch user detail for follows/fans + level
-        const detailRes = await api.userDetail(uidStr);
-        const detailData = detailRes.body || detailRes;
-        if (detailData?.profile) {
-            setStat('stat-follows', String(detailData.profile.follows ?? 0));
-            setStat('stat-fans', String(detailData.profile.followeds ?? 0));
-        }
-        if (detailData?.level != null) {
-            const levelEl = document.getElementById('acct-level');
-            if (levelEl)
-                levelEl.textContent = `Lv.${detailData.level}`;
-        }
-        // Fetch liked songs list for count
-        const likeRes = await api.likelist(uidStr);
-        const likeData = likeRes.body || likeRes;
-        if (likeData?.ids) {
-            setStat('stat-likes', String(likeData.ids.length));
-        }
+        const likes = await api.likelist(uidStr);
+        const ids = (likes.body || likes).ids;
+        if (ids)
+            setStat('as-likes', String(ids.length));
     }
-    catch {
-        // Stats fail silently — keep "--"
-    }
+    catch { /* silent */ }
 }
-function setStat(id, value) {
+function setStat(id, val) {
     const el = document.getElementById(id);
     if (el)
-        el.textContent = value;
+        el.textContent = val;
+}
+function applyTheme(dark) {
+    const vars = dark
+        ? [['--bg-primary', '#0a0a0f'], ['--bg-secondary', '#12121a'], ['--bg-tertiary', '#1a1a28'], ['--text-primary', '#e8e8f0'], ['--text-secondary', '#8888a0'], ['--border', '#1e1e30']]
+        : [['--bg-primary', '#f5f5f7'], ['--bg-secondary', '#ffffff'], ['--bg-tertiary', '#e8e8ed'], ['--text-primary', '#1a1a1a'], ['--text-secondary', '#666666'], ['--border', '#d1d1d6']];
+    vars.forEach(([k, val]) => document.documentElement.style.setProperty(k, val));
 }
 //# sourceMappingURL=account.js.map
