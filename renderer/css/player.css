@@ -78,8 +78,7 @@
   transition: height 0.15s ease;
 }
 
-#player-bar .pb-progress-wrap:hover .pb-progress-track,
-#player-bar .pb-progress-wrap.dragging .pb-progress-track {
+#player-bar .pb-progress-wrap:hover .pb-progress-track {
   height: 6px;
 }
 
@@ -107,8 +106,7 @@
   pointer-events: none;
 }
 
-#player-bar .pb-progress-wrap:hover .pb-progress-thumb,
-#player-bar .pb-progress-wrap.dragging .pb-progress-thumb {
+#player-bar .pb-progress-wrap:hover .pb-progress-thumb {
   opacity: 1;
 }
 
