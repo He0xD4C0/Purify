@@ -582,7 +582,6 @@
   #search-bar {
     grid-area: search;
     background: var(--bg-primary);
-    border-bottom: 1px solid var(--border);
   }
 
   #navbar {

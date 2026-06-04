@@ -51,7 +51,6 @@ html, body {
   align-items: center;
   padding: 8px 16px;
   background: var(--bg-primary);
-  border-bottom: 1px solid var(--border);
   order: 0;
   flex-shrink: 0;
   z-index: 10;
