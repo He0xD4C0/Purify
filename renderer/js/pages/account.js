@@ -188,7 +188,23 @@ function renderMain(container) {
         container.appendChild(infoSection);
         fetchAccountInfo(infoWrap);
     }
-    // Not logged in: skip account info section entirely
+    else {
+        // Placeholder info rows — all except nickname (shown in hero)
+        const placeholders = ['用户 ID', '签名', 'VIP', '等级', '性别', '生日', '地区', '手机绑定', '邮箱绑定'];
+        const card = document.createElement('div');
+        card.className = 'acct-info-card';
+        placeholders.forEach((label) => {
+            const row = document.createElement('div');
+            row.className = 'acct-item';
+            row.style.cursor = 'pointer';
+            row.innerHTML = `<span class="acct-item-label">${label}</span><span class="acct-item-value" style="color:var(--text-muted);font-size:12px;">登录后查看</span>`;
+            row.addEventListener('click', () => bus.emit('auth:require-login'));
+            card.appendChild(row);
+        });
+        infoWrap.appendChild(card);
+        infoSection.appendChild(infoWrap);
+        container.appendChild(infoSection);
+    }
     // ---- Music Library section ----
     const libSection = acctSection('音乐库', [
         acctItem('我的歌单', '', () => router.navigate('library')),
