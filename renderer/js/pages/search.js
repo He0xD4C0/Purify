@@ -38,7 +38,15 @@ export function renderSearch(container, query) {
     fwdBtn.className = 'search-nav-btn';
     fwdBtn.style.cssText = 'width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:50%;color:var(--text-secondary);cursor:pointer;';
     fwdBtn.addEventListener('click', () => history.forward());
-    // Back/forward — browser handles no-op gracefully if no history
+    function updateNavButtons() {
+        const nav = window.navigation;
+        const canFwd = nav ? nav.canGoForward : false;
+        backBtn.style.opacity = (nav ? nav.canGoBack : history.length > 1) ? '' : '0.35';
+        fwdBtn.style.opacity = canFwd ? '' : '0.35';
+        fwdBtn.disabled = !canFwd;
+    }
+    updateNavButtons();
+    window.addEventListener('popstate', () => updateNavButtons());
     // ---- Header row: nav buttons + title ----
     const titleBar = document.createElement('div');
     titleBar.className = 'search-nav-bar';
