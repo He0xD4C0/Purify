@@ -59,7 +59,6 @@ html, body {
   flex-shrink: 0;
   z-index: 10;
   position: relative;
-  border-bottom: 1px solid var(--border);
 }
 
 /* Global back/forward nav buttons — inside #search-bar */
@@ -94,10 +93,9 @@ html, body {
   height: 48px;
   min-height: 48px;
   background: var(--bg-secondary);
-  border-top: none;
-  border-bottom: 1px solid var(--border);
-  padding: 0 12px;
-  order: 1;
+  border-top: 1px solid var(--border);
+  padding: 0 16px;
+  order: 3;
   flex-shrink: 0;
 }
 

@@ -599,7 +599,6 @@
     padding: 20px 12px;
     gap: 4px;
     border-top: none;
-    border-bottom: none;
     border-right: 1px solid var(--border);
     order: 0;
   }
