@@ -221,12 +221,11 @@ html, body {
 
 .song-list .song-row {
   display: grid;
-  grid-template-columns: 32px 48px 1fr 1fr 120px 60px;
+  grid-template-columns: 32px 48px 1fr 1fr 72px 60px 64px;
   gap: 8px;
   align-items: center;
   padding: 8px 12px;
   border-radius: var(--radius);
-  cursor: pointer;
   transition: background var(--transition-fast);
 }
 
@@ -251,6 +250,7 @@ html, body {
   border-radius: var(--radius-sm);
   object-fit: cover;
   background: var(--bg-tertiary);
+  cursor: pointer;
 }
 
 .song-list .song-row .song-cover-placeholder {
@@ -271,6 +271,7 @@ html, body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
 
 .song-list .song-row .song-artist {
@@ -290,6 +291,51 @@ html, body {
 
 .song-list .song-row .song-badge {
   text-align: right;
+}
+
+/* Song row action buttons — visible on hover */
+.song-list .song-row .song-actions {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+}
+
+.song-list .song-row:hover .song-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.song-list .song-row .song-actions .sa-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 0;
+  transition: all var(--transition-fast);
+}
+
+.song-list .song-row .song-actions .sa-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.song-list .song-row .song-actions .sa-btn.play-action:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.song-list .song-row .song-actions .sa-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* ===== Music Badge ===== */
