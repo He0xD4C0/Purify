@@ -277,7 +277,7 @@ export class SwipeBanner {
         this.updatePosition(true);
         this.renderDots();
         this.startAuto();
-      }, 500);
+      }, 2000);
     }, { passive: true });
   }
 
