@@ -80,14 +80,15 @@ export function renderLoginPanel(container, onClose) {
                 throw new Error('获取二维码失败');
             const qrRes = await api.loginQrCreate(unikey);
             const qrUrl = qrRes.data?.qrurl;
-            if (qrUrl && window.QRCode) {
+            if (qrUrl) {
                 const qrCanvas = document.getElementById('qr-canvas');
                 if (qrCanvas) {
-                    new window.QRCode(qrCanvas, {
-                        text: qrUrl,
-                        width: 200,
-                        height: 200,
-                    });
+                    // Use QR code image API — no external library needed
+                    const img = document.createElement('img');
+                    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`;
+                    img.alt = 'QR Code';
+                    img.style.cssText = 'width:200px;height:200px;border-radius:var(--radius);';
+                    qrCanvas.appendChild(img);
                 }
             }
             // Poll for scan

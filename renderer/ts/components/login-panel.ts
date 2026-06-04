@@ -5,12 +5,6 @@ import { bus } from '../core/event-bus.js';
 import { saveCookie, state } from '../core/app.js';
 import { showModal } from './modal.js';
 
-declare global {
-  interface Window {
-    QRCode: any;
-  }
-}
-
 export function renderLoginPanel(container: HTMLElement, onClose?: () => void): void {
   const panel = document.createElement('div');
   panel.className = 'login-panel';
@@ -98,14 +92,15 @@ export function renderLoginPanel(container: HTMLElement, onClose?: () => void): 
       const qrRes = await api.loginQrCreate(unikey);
       const qrUrl = qrRes.data?.qrurl;
 
-      if (qrUrl && window.QRCode) {
+      if (qrUrl) {
         const qrCanvas = document.getElementById('qr-canvas');
         if (qrCanvas) {
-          new window.QRCode(qrCanvas, {
-            text: qrUrl,
-            width: 200,
-            height: 200,
-          });
+          // Use QR code image API — no external library needed
+          const img = document.createElement('img');
+          img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}`;
+          img.alt = 'QR Code';
+          img.style.cssText = 'width:200px;height:200px;border-radius:var(--radius);';
+          qrCanvas.appendChild(img);
         }
       }
 

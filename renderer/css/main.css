@@ -624,7 +624,7 @@ html, body {
   gap: 16px;
 }
 
-.login-panel .qr-container canvas {
+.login-panel .qr-container img {
   border-radius: var(--radius);
   background: white;
   padding: 8px;
