@@ -97,54 +97,49 @@ export function renderAccount(container: HTMLElement): void {
   injectStyles();
   activeSubPage = 'main';
   container.innerHTML = '';
-
-  if (!state.loggedIn) {
-    renderPlaceholder(container);
-    return;
-  }
-
   renderMain(container);
-}
-
-// ============ Placeholder (not logged in) ============
-function renderPlaceholder(container: HTMLElement): void {
-  container.innerHTML = `
-    <div class="acct-placeholder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="72" height="72">
-        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/>
-      </svg>
-      <h2 style="font-size:20px;margin-bottom:8px;">登录 Purify</h2>
-      <p style="color:var(--text-muted);font-size:14px;">登录后可同步歌单、获取每日推荐</p>
-      <button class="acct-btn-primary">立即登录</button>
-    </div>
-  `;
-  container.querySelector('.acct-btn-primary')?.addEventListener('click', () => {
-    bus.emit('auth:require-login');
-  });
 }
 
 // ============ Main account page ============
 function renderMain(container: HTMLElement): void {
   container.innerHTML = '';
-  const profile = state.userProfile!;
+  const loggedIn = state.loggedIn;
+  const profile = state.userProfile;
 
   // ---- Profile hero (centered) ----
   const hero = document.createElement('div');
   hero.className = 'acct-hero';
-  hero.innerHTML = `
-    <img class="acct-avatar-lg" src="${profile.avatarUrl}?param=200y200" alt="">
-    <div class="acct-name-lg">${profile.nickname}</div>
-    <div class="acct-sub" id="acct-vip-tag"></div>
-  `;
+
+  if (loggedIn && profile) {
+    hero.innerHTML = `
+      <img class="acct-avatar-lg" src="${profile.avatarUrl}?param=200y200" alt="">
+      <div class="acct-name-lg">${profile.nickname}</div>
+      <div class="acct-sub" id="acct-vip-tag"></div>
+    `;
+  } else {
+    // Placeholder — click to login
+    hero.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="88" height="88" style="color:var(--text-muted);cursor:pointer;" id="acct-avatar-placeholder">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/>
+      </svg>
+      <div class="acct-name-lg" style="color:var(--text-muted);cursor:pointer;" id="acct-name-placeholder">登录使用更多功能</div>
+      <div class="acct-sub" style="color:var(--text-muted);">点击头像或昵称登录</div>
+    `;
+  }
   container.appendChild(hero);
 
-  // VIP badge
-  const vipTag = document.getElementById('acct-vip-tag');
-  if (vipTag) {
-    const vt = state.vipType;
-    if (vt === 'svip') vipTag.innerHTML = '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;">黑胶 SVIP</span>';
-    else if (vt === 'vip') vipTag.innerHTML = '<span class="music-badge vip" style="font-size:12px;padding:2px 10px;">VIP</span>';
-    else vipTag.textContent = '普通用户';
+  if (loggedIn) {
+    const vipTag = document.getElementById('acct-vip-tag');
+    if (vipTag) {
+      const vt = state.vipType;
+      if (vt === 'svip') vipTag.innerHTML = '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;">黑胶 SVIP</span>';
+      else if (vt === 'vip') vipTag.innerHTML = '<span class="music-badge vip" style="font-size:12px;padding:2px 10px;">VIP</span>';
+      else vipTag.textContent = '普通用户';
+    }
+  } else {
+    // Wire placeholder clicks → login
+    hero.querySelector('#acct-avatar-placeholder')?.addEventListener('click', () => bus.emit('auth:require-login'));
+    hero.querySelector('#acct-name-placeholder')?.addEventListener('click', () => bus.emit('auth:require-login'));
   }
 
   // ---- Stats ----
@@ -157,7 +152,7 @@ function renderMain(container: HTMLElement): void {
     <div class="acct-stat"><div class="acct-stat-num" id="as-likes">--</div><div class="acct-stat-label">喜欢</div></div>
   `;
   container.appendChild(stats);
-  fetchUserStats();
+  if (loggedIn) fetchUserStats();
 
   // ---- Account Info section ----
   const infoSection = document.createElement('div');
@@ -165,10 +160,25 @@ function renderMain(container: HTMLElement): void {
   infoSection.innerHTML = '<div class="acct-section-title">账户信息</div>';
   const infoWrap = document.createElement('div');
   infoWrap.id = 'acct-info-wrap';
-  infoWrap.innerHTML = '<div style="padding:12px 16px;" class="text-muted text-sm">加载中...</div>';
-  infoSection.appendChild(infoWrap);
-  container.appendChild(infoSection);
-  fetchAccountInfo(infoWrap);
+  if (loggedIn) {
+    infoWrap.innerHTML = '<div style="padding:12px 16px;" class="text-muted text-sm">加载中...</div>';
+    infoSection.appendChild(infoWrap);
+    container.appendChild(infoSection);
+    fetchAccountInfo(infoWrap);
+  } else {
+    // Placeholder info rows — all say "登录后查看"
+    const placeholders = ['用户 ID', '昵称', '签名', 'VIP', '等级', '性别', '生日', '地区', '手机绑定', '邮箱绑定'];
+    placeholders.forEach((label) => {
+      const row = document.createElement('div');
+      row.className = 'acct-item';
+      row.style.cursor = 'pointer';
+      row.innerHTML = `<span class="acct-item-label">${label}</span><span class="acct-item-value" style="color:var(--text-muted);font-size:12px;">登录后查看</span>`;
+      row.addEventListener('click', () => bus.emit('auth:require-login'));
+      infoWrap.appendChild(row);
+    });
+    infoSection.appendChild(infoWrap);
+    container.appendChild(infoSection);
+  }
 
   // ---- Music Library section ----
   const libSection = document.createElement('div');

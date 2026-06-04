@@ -532,8 +532,7 @@ html, body {
 
 /* ===== Login Panel ===== */
 .login-panel {
-  max-width: 360px;
-  margin: 40px auto;
+  width: min(420px, calc(100vw - 32px));
   padding: 32px;
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
