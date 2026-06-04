@@ -16,6 +16,7 @@
   --border: #1e1e30;
   --radius: 8px;
   --radius-lg: 14px;
+  --radius-pill: 24px;
   --font-mono: 'SF Mono', 'Cascadia Code', monospace;
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', sans-serif;
   --transition-fast: 0.15s ease;
@@ -156,7 +157,7 @@ html, body {
   padding: 10px 16px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: var(--radius-pill);
   color: var(--text-primary);
   font-size: 14px;
   outline: none;
@@ -179,7 +180,7 @@ html, body {
   right: 0;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-pill);
   max-height: 320px;
   overflow-y: auto;
   z-index: 20;
