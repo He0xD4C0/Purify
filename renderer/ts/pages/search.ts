@@ -28,6 +28,42 @@ export function renderSearch(container: HTMLElement, query: string): void {
     activeTab = 'song';
   }
 
+  // ---- Nav: back / forward ----
+  const navBar = document.createElement('div');
+  navBar.className = 'search-nav-bar';
+  navBar.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:16px;';
+
+  const backBtn = document.createElement('button');
+  backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>';
+  backBtn.title = '后退';
+  backBtn.className = 'search-nav-btn';
+  backBtn.style.cssText = 'width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:50%;color:var(--text-secondary);cursor:pointer;';
+  backBtn.addEventListener('click', () => history.back());
+
+  const fwdBtn = document.createElement('button');
+  fwdBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="9 18 15 12 9 6"/></svg>';
+  fwdBtn.title = '前进';
+  fwdBtn.className = 'search-nav-btn';
+  fwdBtn.style.cssText = 'width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:50%;color:var(--text-secondary);cursor:pointer;';
+  fwdBtn.addEventListener('click', () => history.forward());
+
+  let canGoForward = false;
+
+  function updateNavButtons(): void {
+    backBtn.style.opacity = '0.35';
+    fwdBtn.style.opacity = canGoForward ? '' : '0.35';
+    (fwdBtn as HTMLButtonElement).disabled = !canGoForward;
+  }
+
+  // Track: when user goes back (popstate), there's forward history
+  window.addEventListener('popstate', () => { canGoForward = true; updateNavButtons(); }, { once: true });
+
+  updateNavButtons();
+
+  navBar.appendChild(backBtn);
+  navBar.appendChild(fwdBtn);
+  container.appendChild(navBar);
+
   // ---- Header ----
   const header = document.createElement('div');
   header.className = 'search-header';
