@@ -22,42 +22,10 @@ export function renderSearch(container, query) {
         cachedResults = {};
         activeTab = 'song';
     }
-    // ---- Nav: back / forward ----
-    const navBar = document.createElement('div');
-    navBar.className = 'search-nav-bar';
-    navBar.style.cssText = 'display:flex;align-items:center;gap:8px;';
-    const backBtn = document.createElement('button');
-    backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>';
-    backBtn.title = '后退';
-    backBtn.className = 'search-nav-btn';
-    backBtn.style.cssText = 'width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:50%;color:var(--text-secondary);cursor:pointer;';
-    backBtn.addEventListener('click', () => history.back());
-    const fwdBtn = document.createElement('button');
-    fwdBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="9 18 15 12 9 6"/></svg>';
-    fwdBtn.title = '前进';
-    fwdBtn.className = 'search-nav-btn';
-    fwdBtn.style.cssText = 'width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:50%;color:var(--text-secondary);cursor:pointer;';
-    fwdBtn.addEventListener('click', () => history.forward());
-    function updateNavButtons() {
-        const nav = window.navigation;
-        const canFwd = nav ? nav.canGoForward : false;
-        backBtn.style.opacity = (nav ? nav.canGoBack : history.length > 1) ? '' : '0.35';
-        fwdBtn.style.opacity = canFwd ? '' : '0.35';
-        fwdBtn.disabled = !canFwd;
-    }
-    updateNavButtons();
-    window.addEventListener('popstate', () => updateNavButtons());
-    // ---- Header row: nav buttons + title ----
+    // ---- Title ----
     const titleBar = document.createElement('div');
-    titleBar.className = 'search-nav-bar';
     titleBar.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:10px;';
-    navBar.appendChild(backBtn);
-    navBar.appendChild(fwdBtn);
-    titleBar.appendChild(navBar);
-    const title = document.createElement('h2');
-    title.style.cssText = 'margin:0;font-size:20px;';
-    title.textContent = query;
-    titleBar.appendChild(title);
+    titleBar.innerHTML = `<h2 style="margin:0;font-size:20px;">${query}</h2>`;
     container.appendChild(titleBar);
     // ---- Tabs ----
     const tabBar = document.createElement('div');

@@ -1,4 +1,5 @@
 // Global search bar — always visible at top of app, across all pages
+// Includes back/forward navigation buttons
 
 import { api } from '../core/api.js';
 
@@ -6,6 +7,30 @@ export function initSearchBar(): void {
   const container = document.getElementById('search-bar');
   if (!container) return;
 
+  // ---- Back / Forward nav buttons ----
+  const backBtn = document.createElement('button');
+  backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>';
+  backBtn.title = '后退';
+  backBtn.className = 'search-nav-btn';
+  backBtn.addEventListener('click', () => history.back());
+
+  const fwdBtn = document.createElement('button');
+  fwdBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="9 18 15 12 9 6"/></svg>';
+  fwdBtn.title = '前进';
+  fwdBtn.className = 'search-nav-btn';
+  fwdBtn.addEventListener('click', () => history.forward());
+
+  function updateNavButtons(): void {
+    const nav = (window as any).navigation;
+    backBtn.style.opacity = (nav ? nav.canGoBack : history.length > 1) ? '' : '0.35';
+    const canFwd = nav ? nav.canGoForward : false;
+    fwdBtn.style.opacity = canFwd ? '' : '0.35';
+    (fwdBtn as HTMLButtonElement).disabled = !canFwd;
+  }
+  updateNavButtons();
+  window.addEventListener('popstate', () => updateNavButtons());
+
+  // ---- Search input ----
   const wrapper = document.createElement('div');
   wrapper.className = 'search-bar';
 
@@ -19,7 +44,6 @@ export function initSearchBar(): void {
 
   let debounceTimer: number;
 
-  // ---- Input: suggestions with 300ms debounce ----
   input.addEventListener('input', () => {
     const value = input.value.trim();
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -50,7 +74,7 @@ export function initSearchBar(): void {
     }, 300);
   });
 
-  // ---- Focus: show hot searches when empty ----
+  // Focus: hot searches when empty
   input.addEventListener('focus', async () => {
     if (!input.value.trim()) {
       try {
@@ -75,22 +99,31 @@ export function initSearchBar(): void {
     }
   });
 
-  // ---- Enter = search ----
+  // Enter = search + blur
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const value = input.value.trim();
-      if (value) { suggestions.classList.remove('visible'); doSearch(value); }
+      if (value) {
+        suggestions.classList.remove('visible');
+        doSearch(value);
+      }
+      input.blur();
     }
   });
 
-  // ---- Click outside = close suggestions ----
+  // Click outside = close suggestions
   document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target as Node)) suggestions.classList.remove('visible');
+    if (!wrapper.contains(e.target as Node) && !backBtn.contains(e.target as Node) && !fwdBtn.contains(e.target as Node)) {
+      suggestions.classList.remove('visible');
+    }
   });
 
   wrapper.appendChild(input);
   wrapper.appendChild(suggestions);
+
   container.innerHTML = '';
+  container.appendChild(backBtn);
+  container.appendChild(fwdBtn);
   container.appendChild(wrapper);
 }
 
