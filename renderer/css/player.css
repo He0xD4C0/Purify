@@ -1,8 +1,8 @@
 /* ===== Purify — Player Styles ===== */
 
-/* Player Bar (bottom strip) */
+/* Player Bar (bottom strip) — always visible */
 #player-bar {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 12px;
   height: 64px;
@@ -12,10 +12,7 @@
   padding: 0 16px;
   z-index: 50;
   order: 2;
-}
-
-#player-bar.visible {
-  display: flex;
+  position: relative;
 }
 
 #player-bar .pb-cover {
@@ -83,6 +80,20 @@
 
 #player-bar .pb-btn:hover {
   background: var(--bg-hover);
+}
+
+#player-bar .pb-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+#player-bar .pb-btn:disabled:hover {
+  background: none;
+}
+
+#player-bar.placeholder .pb-title,
+#player-bar.placeholder .pb-artist {
+  color: var(--text-muted);
 }
 
 #player-bar .pb-btn.play-btn {

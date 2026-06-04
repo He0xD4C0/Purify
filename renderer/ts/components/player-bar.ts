@@ -1,4 +1,4 @@
-// Bottom player bar — hidden when player page is open
+// Bottom player bar — always visible, placeholder when idle, click to open player overlay
 
 import { bus } from '../core/event-bus.js';
 import { state, formatTime, type Track } from '../core/app.js';
@@ -8,28 +8,49 @@ export function initPlayerBar(): void {
   const bar = document.getElementById('player-bar');
   if (!bar) return;
 
+  // Build bar UI once
+  bar.innerHTML = `
+    <div class="pb-progress"></div>
+    <img class="pb-cover" src="" alt="">
+    <div class="pb-info">
+      <div class="pb-title">未在播放</div>
+      <div class="pb-artist">点击此处打开播放器</div>
+    </div>
+    <span class="pb-badge"></span>
+    <div class="pb-controls">
+      <button class="pb-btn" data-action="like" title="喜欢" disabled>♡</button>
+      <button class="pb-btn" data-action="prev" title="上一首" disabled>⏮</button>
+      <button class="pb-btn play-btn" data-action="play" title="播放/暂停" disabled>▶</button>
+      <button class="pb-btn" data-action="next" title="下一首" disabled>⏭</button>
+      <button class="pb-btn" data-action="mode" title="播放模式" disabled>🔁</button>
+    </div>
+    <span class="pb-time">--:-- / --:--</span>
+  `;
+
+  // Set initial placeholder state
+  setPlaceholder(true);
+
+  // ---- Event: track changes ----
   function updateTrack(track: Track | null): void {
-    if (!bar) return;
     if (!track) {
-      bar.classList.remove('visible');
+      setPlaceholder(true);
       return;
     }
 
-    bar.classList.add('visible');
+    setPlaceholder(false);
 
-    const cover = bar.querySelector('.pb-cover') as HTMLImageElement;
+    const cover = bar!.querySelector('.pb-cover') as HTMLImageElement;
     if (cover) {
       cover.src = track.album.picUrl ? `${track.album.picUrl}?param=90y90` : '';
     }
 
-    // Info
-    const title = bar.querySelector('.pb-title');
+    const title = bar!.querySelector('.pb-title');
     if (title) title.textContent = track.name;
-    const artist = bar.querySelector('.pb-artist');
+
+    const artist = bar!.querySelector('.pb-artist');
     if (artist) artist.textContent = track.artists.map((a) => a.name).join('/');
 
-    // Badge
-    const badgeWrap = bar.querySelector('.pb-badge');
+    const badgeWrap = bar!.querySelector('.pb-badge');
     if (badgeWrap) {
       badgeWrap.innerHTML = '';
       const status = detectStatus(track.fee || 0, track.privilege);
@@ -56,36 +77,43 @@ export function initPlayerBar(): void {
     if (playBtn) playBtn.textContent = playing ? '⏸' : '▶';
   }
 
+  function setPlaceholder(empty: boolean): void {
+    bar!.classList.toggle('placeholder', empty);
+
+    const disabled = bar!.querySelectorAll('.pb-btn[data-action]');
+    disabled.forEach((btn) => {
+      (btn as HTMLButtonElement).disabled = empty;
+    });
+
+    if (empty) {
+      const cover = bar!.querySelector('.pb-cover') as HTMLImageElement;
+      if (cover) cover.src = '';
+      const title = bar!.querySelector('.pb-title');
+      if (title) title.textContent = '未在播放';
+      const artist = bar!.querySelector('.pb-artist');
+      if (artist) artist.textContent = '点击此处打开播放器';
+      const badgeWrap = bar!.querySelector('.pb-badge');
+      if (badgeWrap) badgeWrap.innerHTML = '';
+      const progress = bar!.querySelector('.pb-progress') as HTMLElement;
+      if (progress) progress.style.width = '0%';
+      const timeEl = bar!.querySelector('.pb-time');
+      if (timeEl) timeEl.textContent = '--:-- / --:--';
+    }
+  }
+
   bus.on('player:track-change', (track: Track) => updateTrack(track));
   bus.on('player:time-update', (time: number) => updateTime(time));
   bus.on('player:state-change', (playing: boolean) => updatePlayState(playing));
 
-  // Build bar UI
-  bar.innerHTML = `
-    <div class="pb-progress"></div>
-    <img class="pb-cover" src="" alt="">
-    <div class="pb-info">
-      <div class="pb-title"></div>
-      <div class="pb-artist"></div>
-    </div>
-    <span class="pb-badge"></span>
-    <div class="pb-controls">
-      <button class="pb-btn" data-action="like" title="喜欢">♡</button>
-      <button class="pb-btn" data-action="prev" title="上一首">⏮</button>
-      <button class="pb-btn play-btn" data-action="play" title="播放/暂停">▶</button>
-      <button class="pb-btn" data-action="next" title="下一首">⏭</button>
-      <button class="pb-btn" data-action="mode" title="播放模式">🔁</button>
-    </div>
-    <span class="pb-time">--:-- / --:--</span>
-  `;
-
-  // Event handlers
+  // ---- Click to open player overlay ----
   bar.querySelector('.pb-cover')?.addEventListener('click', () => {
-    bus.emit('nav:page', 'player');
+    bus.emit('player:open-overlay');
   });
   bar.querySelector('.pb-info')?.addEventListener('click', () => {
-    bus.emit('nav:page', 'player');
+    bus.emit('player:open-overlay');
   });
+
+  // ---- Action buttons ----
   bar.querySelector('[data-action="play"]')?.addEventListener('click', () => {
     bus.emit('player:toggle');
   });

@@ -76,9 +76,9 @@ function getContent(): HTMLElement {
   return document.getElementById('content')!;
 }
 
-function renderPage(hash: string): void {
+/** Shared page dispatch — called by both router and nav events */
+function renderContent(page: string): void {
   const container = getContent();
-  const page = hash || 'home';
 
   // Handle sub-routes like playlist/123, settings/account
   if (page.startsWith('playlist/')) {
@@ -94,30 +94,23 @@ function renderPage(hash: string): void {
   }
 
   switch (page) {
-    case 'home':
-      renderHome(container);
-      break;
-    case 'player':
-      showPlayerPage();
-      break;
-    case 'library':
-      renderLibrary(container);
-      break;
-    case 'account':
-      renderAccount(container);
-      break;
-    default:
-      renderHome(container);
+    case 'home':    renderHome(container); break;
+    case 'library': renderLibrary(container); break;
+    case 'account': renderAccount(container); break;
+    default:        renderHome(container); break;
   }
+}
 
+function navigateTo(hash: string): void {
+  const page = hash || 'home';
   state.currentPage = page;
   bus.emit('nav:page', page);
 }
 
-function showPlayerPage(): void {
+function showPlayerOverlay(): void {
   const page = document.getElementById('player-page');
-  if (page && !page.classList.contains('hidden')) {
-    // Already visible — close it
+  if (!page) return;
+  if (!page.classList.contains('hidden')) {
     page.classList.add('hidden');
     return;
   }
@@ -136,26 +129,16 @@ export async function init(): Promise<void> {
   checkLoginStatus();
 
   // Set up router
-  router.register('home', () => renderPage('home'));
-  router.register('player', () => renderPage('player'));
-  router.register('library', () => renderPage('library'));
-  router.register('account', () => renderPage('account'));
-  router.register('settings', () => renderPage('settings'));
+  router.register('home', () => navigateTo('home'));
+  router.register('library', () => navigateTo('library'));
+  router.register('account', () => navigateTo('account'));
+  router.register('settings', () => navigateTo('settings'));
 
-  // Listen for nav:page events to handle dynamic page rendering
-  bus.on('nav:page', (page: string) => {
-    if (page === 'player') {
-      showPlayerPage();
-    } else {
-      const container = getContent();
-      switch (page) {
-        case 'home': renderHome(container); break;
-        case 'library': renderLibrary(container); break;
-        case 'account': renderAccount(container); break;
-        case 'settings': renderSettings(container); break;
-      }
-    }
-  });
+  // Player overlay — available globally on all pages
+  bus.on('player:open-overlay', () => showPlayerOverlay());
+
+  // Single shared page dispatch
+  bus.on('nav:page', (page: string) => renderContent(page));
 
   // Handle player page close
   bus.on('player:page-close', () => {
