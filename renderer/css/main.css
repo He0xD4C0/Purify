@@ -344,7 +344,7 @@ html, body {
 .banner-track {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 0;
   padding: 0 32px;
   will-change: transform;
 }
@@ -357,7 +357,6 @@ html, body {
 .banner-slide img {
   display: block;
   pointer-events: none;
-  border-radius: var(--radius);
   /* height & width set dynamically by JS from natural ratio */
 }
 
