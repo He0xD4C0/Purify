@@ -23,6 +23,7 @@ const MODE_ICONS: Record<string, string> = { list: SVG.list, random: SVG.random,
 export function initPlayerBar(): void {
   const bar = document.getElementById('player-bar');
   if (!bar) return;
+  const barEl = bar; // non-null ref for inner functions
 
   // ---- Build UI ----
   bar.innerHTML = `
@@ -129,7 +130,7 @@ export function initPlayerBar(): void {
     if (!track) { placeholder(); return; }
 
     ctrlBtns.forEach((b) => (b.disabled = false));
-    bar.classList.remove('placeholder');
+    bar!.classList.remove('placeholder');
 
     // Cover
     const picUrl = track.album.picUrl ? `${track.album.picUrl}?param=90y90` : '';
@@ -162,7 +163,7 @@ export function initPlayerBar(): void {
   }
 
   function placeholder(): void {
-    bar.classList.add('placeholder');
+    bar!.classList.add('placeholder');
     ctrlBtns.forEach((b) => (b.disabled = true));
     fill.style.width = '0%';
     thumb.style.left = '0%';

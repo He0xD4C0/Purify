@@ -1,25 +1,18 @@
 // Bottom player bar — always visible, placeholder when idle, click to open player overlay
 import { bus } from '../core/event-bus.js';
 import { state, formatTime } from '../core/app.js';
+import { audioEngine } from '../player/audio-engine.js';
 import { renderBadge, detectStatus } from './music-badge.js';
 // ---- SVG icons (24x24 viewBox) ----
 const SVG = {
     note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
-    // Play — rounded triangle
     play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 4.5c-.3-.2-.7-.2-1-.1-.3.1-.5.4-.5.8v13.6c0 .4.2.7.5.8.3.1.7.1 1-.1l11.5-6.8c.3-.2.5-.5.5-.8s-.2-.6-.5-.8L7.5 4.5z" stroke-linejoin="round"/></svg>',
-    // Pause — two rounded rects
     pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg>',
-    // Previous — two left-pointing triangles
-    prev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="20,5 11,12 20,19" fill="currentColor" stroke="none"/><polygon points="11,5 2,12 11,19" fill="currentColor" stroke="none"/></svg>',
-    // Next — two right-pointing triangles
-    next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4,5 13,12 4,19" fill="currentColor" stroke="none"/><polygon points="13,5 22,12 13,19" fill="currentColor" stroke="none"/></svg>',
-    // Heart outline
+    prev: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 5v14L9 12z"/><path d="M9 5v14H6V5z"/></svg>',
+    next: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5v14l9-7z"/><path d="M15 5v14h3V5z"/></svg>',
     heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 00-7.8 7.8L12 21l8.9-8.9a5.5 5.5 0 000-7.8z"/></svg>',
-    // List loop
     list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>',
-    // Random shuffle
     random: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
-    // Single repeat
     single: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/><text x="8" y="16" font-size="8" fill="currentColor" stroke="none" font-weight="bold">1</text></svg>',
 };
 const MODE_ICONS = { list: SVG.list, random: SVG.random, single: SVG.single };
@@ -27,10 +20,11 @@ export function initPlayerBar() {
     const bar = document.getElementById('player-bar');
     if (!bar)
         return;
-    // Build bar UI once
+    const barEl = bar; // non-null ref for inner functions
+    // ---- Build UI ----
     bar.innerHTML = `
     <div class="pb-progress-wrap">
-      <div class="pb-progress-track" data-action="seek-track">
+      <div class="pb-progress-track">
         <div class="pb-progress-fill"></div>
         <div class="pb-progress-thumb"></div>
       </div>
@@ -42,70 +36,101 @@ export function initPlayerBar() {
     </div>
     <span class="pb-badge"></span>
     <div class="pb-controls">
-      <button class="pb-btn" data-action="like" title="喜欢" disabled>${SVG.heart}</button>
-      <button class="pb-btn" data-action="prev" title="上一首" disabled>${SVG.prev}</button>
-      <button class="pb-btn play-btn" data-action="play" title="播放/暂停" disabled>${SVG.play}</button>
-      <button class="pb-btn" data-action="next" title="下一首" disabled>${SVG.next}</button>
-      <button class="pb-btn" data-action="mode" title="列表循环" disabled>${SVG.list}</button>
+      <button class="pb-btn" data-action="like" title="喜欢">${SVG.heart}</button>
+      <button class="pb-btn" data-action="prev" title="上一首">${SVG.prev}</button>
+      <button class="pb-btn play-btn" data-action="play" title="播放/暂停">${SVG.play}</button>
+      <button class="pb-btn" data-action="next" title="下一首">${SVG.next}</button>
+      <button class="pb-btn" data-action="mode" title="列表循环">${SVG.list}</button>
     </div>
     <span class="pb-time">--:-- / --:--</span>
   `;
-    // Cache DOM refs
+    // ---- Cache DOM ----
+    const wrap = bar.querySelector('.pb-progress-wrap');
     const track = bar.querySelector('.pb-progress-track');
     const fill = bar.querySelector('.pb-progress-fill');
     const thumb = bar.querySelector('.pb-progress-thumb');
     const timeEl = bar.querySelector('.pb-time');
     const playBtn = bar.querySelector('.pb-btn.play-btn');
+    const prevBtn = bar.querySelector('[data-action="prev"]');
+    const nextBtn = bar.querySelector('[data-action="next"]');
+    const likeBtn = bar.querySelector('[data-action="like"]');
     const modeBtn = bar.querySelector('[data-action="mode"]');
-    // Set initial placeholder
-    setPlaceholder(true);
-    // ============== Progress bar — click + drag to seek ==============
-    function pctFromEvent(e) {
+    const coverEl = bar.querySelector('.pb-cover');
+    const infoEl = bar.querySelector('.pb-info');
+    const badgeWrap = bar.querySelector('.pb-badge');
+    const titleEl = bar.querySelector('.pb-title');
+    const artistEl = bar.querySelector('.pb-artist');
+    const ctrlBtns = [likeBtn, prevBtn, playBtn, nextBtn, modeBtn];
+    // ---- Progress bar: click + drag ----
+    function pctFromClientX(x) {
         const rect = track.getBoundingClientRect();
-        return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        return Math.max(0, Math.min(1, (x - rect.left) / rect.width));
     }
-    function seekByEvent(e) {
+    function doSeek(x) {
         if (!state.currentTrack)
             return;
-        const time = pctFromEvent(e) * (state.currentTrack.duration / 1000);
-        bus.emit('player:seek-to', time);
+        const time = pctFromClientX(x) * (state.currentTrack.duration / 1000);
+        audioEngine.seekTo(time);
     }
-    track.addEventListener('mousedown', (e) => {
+    // Click to seek
+    track.addEventListener('click', (e) => {
+        if (!state.currentTrack)
+            return;
+        doSeek(e.clientX);
+    });
+    // Drag to seek — pointer capture for reliable tracking
+    track.addEventListener('pointerdown', (e) => {
         if (!state.currentTrack)
             return;
         e.preventDefault();
-        seekByEvent(e);
-        function onMove(ev) {
-            seekByEvent(ev);
-        }
-        function onUp() {
-            document.removeEventListener('mousemove', onMove);
-            document.removeEventListener('mouseup', onUp);
-        }
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
+        track.setPointerCapture(e.pointerId);
+        wrap.classList.add('dragging');
+        doSeek(e.clientX);
     });
-    // ============== Event handlers ==============
+    track.addEventListener('pointermove', (e) => {
+        if (!track.hasPointerCapture(e.pointerId))
+            return;
+        doSeek(e.clientX);
+    });
+    const endDrag = (e) => {
+        if (!track.hasPointerCapture(e.pointerId))
+            return;
+        track.releasePointerCapture(e.pointerId);
+        wrap.classList.remove('dragging');
+    };
+    track.addEventListener('pointerup', endDrag);
+    track.addEventListener('pointercancel', endDrag);
+    // ---- Controls — direct call to audioEngine (no event bus) ----
+    playBtn.addEventListener('click', (e) => { e.stopPropagation(); audioEngine.togglePlay(); });
+    prevBtn.addEventListener('click', (e) => { e.stopPropagation(); audioEngine.playPrev(); });
+    nextBtn.addEventListener('click', (e) => { e.stopPropagation(); audioEngine.playNext(); });
+    likeBtn.addEventListener('click', (e) => { e.stopPropagation(); bus.emit('player:like-toggle'); });
+    modeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const modes = ['list', 'random', 'single'];
+        const idx = modes.indexOf(state.playMode);
+        state.playMode = modes[(idx + 1) % modes.length];
+        updateMode();
+    });
+    // ---- Open player overlay ----
+    coverEl.addEventListener('click', () => bus.emit('player:open-overlay'));
+    infoEl.addEventListener('click', () => bus.emit('player:open-overlay'));
+    // ---- State updaters ----
     function updateTrack(track) {
         if (!track) {
-            setPlaceholder(true);
+            placeholder();
             return;
         }
-        setPlaceholder(false);
+        ctrlBtns.forEach((b) => (b.disabled = false));
+        bar.classList.remove('placeholder');
         // Cover
-        const cover = bar.querySelector('.pb-cover');
-        if (cover) {
-            const picUrl = track.album.picUrl ? `${track.album.picUrl}?param=90y90` : '';
-            cover.innerHTML = `<img src="${picUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
-        }
-        bar.querySelector('.pb-title').textContent = track.name;
-        bar.querySelector('.pb-artist').textContent = track.artists.map((a) => a.name).join('/');
-        const badgeWrap = bar.querySelector('.pb-badge');
-        if (badgeWrap) {
-            badgeWrap.innerHTML = '';
-            const status = detectStatus(track.fee || 0, track.privilege);
-            badgeWrap.appendChild(renderBadge(status));
-        }
+        const picUrl = track.album.picUrl ? `${track.album.picUrl}?param=90y90` : '';
+        coverEl.innerHTML = `<img src="${picUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`;
+        titleEl.textContent = track.name;
+        artistEl.textContent = track.artists.map((a) => a.name).join('/');
+        badgeWrap.innerHTML = '';
+        const status = detectStatus(track.fee || 0, track.privilege);
+        badgeWrap.appendChild(renderBadge(status));
     }
     function updateTime(time) {
         if (!state.currentTrack)
@@ -124,40 +149,24 @@ export function initPlayerBar() {
     function updateMode() {
         modeBtn.innerHTML = MODE_ICONS[state.playMode];
     }
-    function setPlaceholder(empty) {
-        bar.classList.toggle('placeholder', empty);
-        bar.querySelectorAll('.pb-btn[data-action]').forEach((btn) => {
-            btn.disabled = empty;
-        });
-        if (empty) {
-            fill.style.width = '0%';
-            thumb.style.left = '0%';
-            timeEl.textContent = '--:-- / --:--';
-            bar.querySelector('.pb-cover').innerHTML = SVG.note;
-            bar.querySelector('.pb-title').textContent = '未在播放';
-            bar.querySelector('.pb-artist').textContent = '点击此处打开播放器';
-            const badgeWrap = bar.querySelector('.pb-badge');
-            if (badgeWrap)
-                badgeWrap.innerHTML = '';
-            playBtn.innerHTML = SVG.play;
-        }
+    function placeholder() {
+        bar.classList.add('placeholder');
+        ctrlBtns.forEach((b) => (b.disabled = true));
+        fill.style.width = '0%';
+        thumb.style.left = '0%';
+        timeEl.textContent = '--:-- / --:--';
+        coverEl.innerHTML = SVG.note;
+        titleEl.textContent = '未在播放';
+        artistEl.textContent = '点击此处打开播放器';
+        badgeWrap.innerHTML = '';
+        playBtn.innerHTML = SVG.play;
     }
+    // ---- Listen for state changes ----
     bus.on('player:track-change', (track) => updateTrack(track));
     bus.on('player:time-update', (time) => updateTime(time));
     bus.on('player:state-change', (playing) => updatePlayState(playing));
+    // Init
+    placeholder();
     updateMode();
-    // ---- Click to open player overlay ----
-    bar.querySelector('.pb-cover')?.addEventListener('click', () => bus.emit('player:open-overlay'));
-    bar.querySelector('.pb-info')?.addEventListener('click', () => bus.emit('player:open-overlay'));
-    // ---- Action buttons ----
-    playBtn.addEventListener('click', () => bus.emit('player:toggle'));
-    bar.querySelector('[data-action="prev"]')?.addEventListener('click', () => bus.emit('player:prev'));
-    bar.querySelector('[data-action="next"]')?.addEventListener('click', () => bus.emit('player:next'));
-    modeBtn.addEventListener('click', () => {
-        const modes = ['list', 'random', 'single'];
-        const idx = modes.indexOf(state.playMode);
-        state.playMode = modes[(idx + 1) % modes.length];
-        updateMode();
-    });
 }
 //# sourceMappingURL=player-bar.js.map
