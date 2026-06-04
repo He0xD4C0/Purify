@@ -1,23 +1,27 @@
-// Search bar with suggestions dropdown — embedded in home page top
+// Global search bar — always visible at top of app, across all pages
 import { api } from '../core/api.js';
-export function createSearchBar(options) {
+import { router } from '../core/router.js';
+import { bus } from '../core/event-bus.js';
+export function initSearchBar() {
+    const container = document.getElementById('search-bar');
+    if (!container)
+        return;
     const wrapper = document.createElement('div');
     wrapper.className = 'search-bar';
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = '搜索音乐、歌手、歌词...';
     input.autocomplete = 'off';
-    // Suggestions dropdown
     const suggestions = document.createElement('div');
     suggestions.className = 'search-suggestions';
     let debounceTimer;
+    // ---- Input: suggestions with 300ms debounce ----
     input.addEventListener('input', () => {
         const value = input.value.trim();
         if (debounceTimer)
             clearTimeout(debounceTimer);
         if (!value) {
             suggestions.classList.remove('visible');
-            suggestions.innerHTML = '';
             return;
         }
         debounceTimer = window.setTimeout(async () => {
@@ -29,11 +33,11 @@ export function createSearchBar(options) {
                     items.slice(0, 8).forEach((item) => {
                         const div = document.createElement('div');
                         div.className = 'suggestion-item';
-                        div.innerHTML = `🔍 <span class="keyword">${item.keyword || item.name}</span>`;
+                        div.innerHTML = '<span class="keyword">' + (item.keyword || item.name) + '</span>';
                         div.addEventListener('click', () => {
                             input.value = item.keyword || item.name;
                             suggestions.classList.remove('visible');
-                            options.onSearch(input.value);
+                            doSearch(input.value);
                         });
                         suggestions.appendChild(div);
                     });
@@ -48,7 +52,7 @@ export function createSearchBar(options) {
             }
         }, 300);
     });
-    // Show hot searches on focus when empty
+    // ---- Focus: show hot searches when empty ----
     input.addEventListener('focus', async () => {
         if (!input.value.trim()) {
             try {
@@ -63,36 +67,41 @@ export function createSearchBar(options) {
                         div.addEventListener('click', () => {
                             input.value = item.first;
                             suggestions.classList.remove('visible');
-                            options.onSearch(item.first);
+                            doSearch(item.first);
                         });
                         suggestions.appendChild(div);
                     });
                     suggestions.classList.add('visible');
                 }
             }
-            catch {
-                // ignore
-            }
+            catch { /* ignore */ }
         }
     });
-    // Enter = search
+    // ---- Enter = search ----
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             const value = input.value.trim();
             if (value) {
                 suggestions.classList.remove('visible');
-                options.onSearch(value);
+                doSearch(value);
             }
         }
     });
-    // Close suggestions on outside click
+    // ---- Click outside = close suggestions ----
     document.addEventListener('click', (e) => {
-        if (!wrapper.contains(e.target)) {
+        if (!wrapper.contains(e.target))
             suggestions.classList.remove('visible');
-        }
     });
     wrapper.appendChild(input);
     wrapper.appendChild(suggestions);
-    options.container.appendChild(wrapper);
+    container.innerHTML = '';
+    container.appendChild(wrapper);
+}
+/** Navigate to home page and emit search event */
+function doSearch(keywords) {
+    // Always go to home page for search results
+    router.navigate('home');
+    // Slight delay to let the page render, then emit search
+    setTimeout(() => bus.emit('search:submit', keywords), 50);
 }
 //# sourceMappingURL=search-bar.js.map

@@ -572,10 +572,16 @@
   #app {
     display: grid;
     grid-template-columns: auto 1fr;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: auto 1fr auto;
     grid-template-areas:
+      "nav search"
       "nav content"
       "nav player-bar";
+  }
+
+  #search-bar {
+    grid-area: search;
+    border-bottom: 1px solid var(--border);
   }
 
   #navbar {

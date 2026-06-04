@@ -5,27 +5,24 @@ import { bus } from '../core/event-bus.js';
 import { state, playTrack, type Track } from '../core/app.js';
 import { api } from '../core/api.js';
 import { SwipeBanner } from '../patterns/swipe-banner.js';
-import { createSearchBar } from '../components/search-bar.js';
 import { renderPlaylistGrid, type PlaylistInfo } from '../components/playlist-card.js';
 import { renderSongList } from '../components/song-list.js';
 import { renderLoginPanel } from '../components/login-panel.js';
 
 let banner: SwipeBanner;
+let homeContainer: HTMLElement | null = null;
+
+// Listen for global search — show results in home page
+bus.on('search:submit', (keywords: string) => {
+  if (homeContainer) renderSearchResults(homeContainer, keywords);
+});
 
 export function renderHome(container: HTMLElement): void {
+  homeContainer = container;
   container.innerHTML = '';
   container.className = 'home-page';
 
-  // 1. Search bar — top of home page
-  createSearchBar({
-    container,
-    onSearch: (keywords) => {
-      // Navigate to a search result view (inline for now)
-      renderSearchResults(container, keywords);
-    },
-  });
-
-  // 2. Banner
+  // 1. Banner
   const bannerWrap = document.createElement('div');
   bannerWrap.id = 'home-banner';
   container.appendChild(bannerWrap);

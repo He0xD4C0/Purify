@@ -4,6 +4,7 @@ import { storage } from './storage.js';
 import { api } from './api.js';
 import { initNavbar } from '../components/navbar.js';
 import { initPlayerBar } from '../components/player-bar.js';
+import { initSearchBar } from '../components/search-bar.js';
 import { renderHome } from '../pages/home.js';
 import { renderLibrary } from '../pages/library.js';
 import { renderAccount } from '../pages/account.js';
@@ -122,6 +123,7 @@ export async function init(): Promise<void> {
   restoreCookie();
 
   // Init UI chrome
+  initSearchBar();
   initNavbar();
   initPlayerBar();
 

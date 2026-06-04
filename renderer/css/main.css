@@ -45,6 +45,24 @@ html, body {
   height: 100%;
 }
 
+/* ===== Search Bar — global, always at top ===== */
+#search-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  order: 0;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+#search-bar .search-bar {
+  width: 100%;
+  position: relative;
+  padding-bottom: 0;
+}
+
 /* ===== Navbar — bottom on mobile, left sidebar on desktop ===== */
 #navbar {
   display: flex;
@@ -128,13 +146,9 @@ html, body {
   border-radius: 3px;
 }
 
-/* ===== Search Bar ===== */
+/* ===== Search Bar (input + suggestions) ===== */
 .search-bar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--bg-primary);
-  padding-bottom: 12px;
+  position: relative;
 }
 
 .search-bar input {

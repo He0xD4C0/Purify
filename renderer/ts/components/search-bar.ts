@@ -1,14 +1,13 @@
-// Search bar with suggestions dropdown — embedded in home page top
+// Global search bar — always visible at top of app, across all pages
 
 import { api } from '../core/api.js';
 import { router } from '../core/router.js';
+import { bus } from '../core/event-bus.js';
 
-interface SearchBarOptions {
-  container: HTMLElement;
-  onSearch: (keywords: string) => void;
-}
+export function initSearchBar(): void {
+  const container = document.getElementById('search-bar');
+  if (!container) return;
 
-export function createSearchBar(options: SearchBarOptions): void {
   const wrapper = document.createElement('div');
   wrapper.className = 'search-bar';
 
@@ -17,38 +16,31 @@ export function createSearchBar(options: SearchBarOptions): void {
   input.placeholder = '搜索音乐、歌手、歌词...';
   input.autocomplete = 'off';
 
-  // Suggestions dropdown
   const suggestions = document.createElement('div');
   suggestions.className = 'search-suggestions';
 
   let debounceTimer: number;
 
+  // ---- Input: suggestions with 300ms debounce ----
   input.addEventListener('input', () => {
     const value = input.value.trim();
-
     if (debounceTimer) clearTimeout(debounceTimer);
-
-    if (!value) {
-      suggestions.classList.remove('visible');
-      suggestions.innerHTML = '';
-      return;
-    }
+    if (!value) { suggestions.classList.remove('visible'); return; }
 
     debounceTimer = window.setTimeout(async () => {
       try {
         const res = await api.searchSuggest(value);
         const items = res.result?.allMatch || res.result?.songs || [];
         suggestions.innerHTML = '';
-
         if (items.length > 0) {
           items.slice(0, 8).forEach((item: any) => {
             const div = document.createElement('div');
             div.className = 'suggestion-item';
-            div.innerHTML = `🔍 <span class="keyword">${item.keyword || item.name}</span>`;
+            div.innerHTML = '<span class="keyword">' + (item.keyword || item.name) + '</span>';
             div.addEventListener('click', () => {
               input.value = item.keyword || item.name;
               suggestions.classList.remove('visible');
-              options.onSearch(input.value);
+              doSearch(input.value);
             });
             suggestions.appendChild(div);
           });
@@ -56,20 +48,17 @@ export function createSearchBar(options: SearchBarOptions): void {
         } else {
           suggestions.classList.remove('visible');
         }
-      } catch {
-        suggestions.classList.remove('visible');
-      }
+      } catch { suggestions.classList.remove('visible'); }
     }, 300);
   });
 
-  // Show hot searches on focus when empty
+  // ---- Focus: show hot searches when empty ----
   input.addEventListener('focus', async () => {
     if (!input.value.trim()) {
       try {
         const res = await api.searchHot();
         const hots = res.result?.hots || [];
         suggestions.innerHTML = '';
-
         if (hots.length > 0) {
           hots.slice(0, 10).forEach((item: any) => {
             const div = document.createElement('div');
@@ -78,37 +67,39 @@ export function createSearchBar(options: SearchBarOptions): void {
             div.addEventListener('click', () => {
               input.value = item.first;
               suggestions.classList.remove('visible');
-              options.onSearch(item.first);
+              doSearch(item.first);
             });
             suggestions.appendChild(div);
           });
           suggestions.classList.add('visible');
         }
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     }
   });
 
-  // Enter = search
+  // ---- Enter = search ----
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const value = input.value.trim();
-      if (value) {
-        suggestions.classList.remove('visible');
-        options.onSearch(value);
-      }
+      if (value) { suggestions.classList.remove('visible'); doSearch(value); }
     }
   });
 
-  // Close suggestions on outside click
+  // ---- Click outside = close suggestions ----
   document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target as Node)) {
-      suggestions.classList.remove('visible');
-    }
+    if (!wrapper.contains(e.target as Node)) suggestions.classList.remove('visible');
   });
 
   wrapper.appendChild(input);
   wrapper.appendChild(suggestions);
-  options.container.appendChild(wrapper);
+  container.innerHTML = '';
+  container.appendChild(wrapper);
+}
+
+/** Navigate to home page and emit search event */
+function doSearch(keywords: string): void {
+  // Always go to home page for search results
+  router.navigate('home');
+  // Slight delay to let the page render, then emit search
+  setTimeout(() => bus.emit('search:submit', keywords), 50);
 }
