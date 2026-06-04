@@ -582,10 +582,10 @@ html, body {
 
 .login-panel .form-group input {
   width: 100%;
-  padding: 10px 14px;
+  padding: 10px 16px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   color: var(--text-primary);
   font-size: 14px;
   outline: none;
@@ -601,7 +601,7 @@ html, body {
   background: var(--accent);
   color: white;
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;

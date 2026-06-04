@@ -31,31 +31,39 @@ function injectStyles(): void {
     }
     .acct-stats {
       display: flex; justify-content: center; gap: 32px;
-      margin: 20px 0;
+      margin: 20px 16px;
+      padding: 12px 0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
     }
-    .acct-stat {
-      text-align: center;
-    }
-    .acct-stat-num {
-      font-size: 20px; font-weight: 700;
-    }
+    .acct-stat { text-align: center; }
+    .acct-stat-num { font-size: 20px; font-weight: 700; }
     .acct-stat-label {
       font-size: 11px; color: var(--text-muted); margin-top: 2px;
     }
-    .acct-section {
-      margin-bottom: 6px;
-    }
+    /* Grouped list — iOS-style */
+    .acct-section { margin: 0 16px 16px; }
     .acct-section-title {
       font-size: 11px; color: var(--text-muted); text-transform: uppercase;
-      letter-spacing: 1px; padding: 12px 16px 6px;
+      letter-spacing: 1px; padding: 0 4px 8px;
+    }
+    .acct-group {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
     }
     .acct-item {
       display: flex; align-items: center;
-      padding: 14px 16px; margin: 1px 8px;
-      background: var(--bg-secondary); border-radius: var(--radius);
+      padding: 14px 16px;
       cursor: pointer; transition: background var(--transition-fast);
-      border: none; width: calc(100% - 16px); text-align: left;
+      border: none; width: 100%; text-align: left;
       color: var(--text-primary); font-size: 14px;
+      background: none;
+    }
+    .acct-item + .acct-item {
+      border-top: 1px solid var(--border);
     }
     .acct-item:hover { background: var(--bg-hover); }
     .acct-item .acct-item-icon { margin-right: 12px; font-size: 18px; }
@@ -64,6 +72,7 @@ function injectStyles(): void {
     .acct-item .acct-item-arrow { color: var(--text-muted); font-size: 16px; }
     .acct-item.danger { color: #ff4444; }
     .acct-item.danger:hover { background: rgba(255,68,68,0.08); }
+    .acct-item.danger + .acct-item { border-top-color: rgba(255,68,68,0.15); }
     .acct-toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--bg-hover);
       border: none; cursor: pointer; position: relative; transition: background var(--transition-fast);
       flex-shrink: 0; }
@@ -72,11 +81,6 @@ function injectStyles(): void {
       width: 20px; height: 20px; border-radius: 50%; background: white;
       transition: transform var(--transition-fast); }
     .acct-toggle.on::after { transform: translateX(20px); }
-    .acct-placeholder {
-      display: flex; flex-direction: column; align-items: center;
-      padding: 60px 20px; text-align: center;
-    }
-    .acct-placeholder svg { color: var(--text-muted); margin-bottom: 16px; }
     .acct-btn-primary {
       padding: 10px 32px; background: var(--accent); color: white;
       border: none; border-radius: var(--radius-pill); font-size: 15px;
@@ -89,6 +93,29 @@ function injectStyles(): void {
       font-size: 14px; cursor: pointer;
     }
     .acct-back-btn:hover { color: var(--text-primary); }
+    /* Info card */
+    .acct-info-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .acct-info-card .acct-item {
+      cursor: default;
+    }
+    .acct-info-card .acct-item:hover {
+      background: none;
+    }
+    /* Form inputs in sub-pages */
+    .acct-field {
+      width: 100%; padding: 8px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-primary); font-size: 14px;
+      outline: none;
+    }
+    .acct-field:focus { border-color: var(--accent); }
   `;
   document.head.appendChild(s);
 }
@@ -166,58 +193,50 @@ function renderMain(container: HTMLElement): void {
     container.appendChild(infoSection);
     fetchAccountInfo(infoWrap);
   } else {
-    // Placeholder info rows — all say "登录后查看"
+    // Placeholder info rows
     const placeholders = ['用户 ID', '昵称', '签名', 'VIP', '等级', '性别', '生日', '地区', '手机绑定', '邮箱绑定'];
+    const card = document.createElement('div');
+    card.className = 'acct-info-card';
     placeholders.forEach((label) => {
       const row = document.createElement('div');
       row.className = 'acct-item';
       row.style.cursor = 'pointer';
       row.innerHTML = `<span class="acct-item-label">${label}</span><span class="acct-item-value" style="color:var(--text-muted);font-size:12px;">登录后查看</span>`;
       row.addEventListener('click', () => bus.emit('auth:require-login'));
-      infoWrap.appendChild(row);
+      card.appendChild(row);
     });
+    infoWrap.appendChild(card);
     infoSection.appendChild(infoWrap);
     container.appendChild(infoSection);
   }
 
   // ---- Music Library section ----
-  const libSection = document.createElement('div');
-  libSection.className = 'acct-section';
-  libSection.innerHTML = '<div class="acct-section-title">音乐库</div>';
-  libSection.appendChild(acctItem('我的歌单', '', () => router.navigate('library')));
-  libSection.appendChild(acctItem('最近播放', '', () => router.navigate('library')));
+  const libSection = acctSection('音乐库', [
+    acctItem('我的歌单', '', () => router.navigate('library')),
+    acctItem('最近播放', '', () => router.navigate('library')),
+  ]);
   container.appendChild(libSection);
 
   // ---- Settings section ----
-  const settSection = document.createElement('div');
-  settSection.className = 'acct-section';
-  settSection.innerHTML = '<div class="acct-section-title">设置</div>';
-
-  // Playback → sub-page
-  settSection.appendChild(acctItem('播放设置', '', () => showSubPage(container, 'playback')));
-  // AI Translate → sub-page
-  settSection.appendChild(acctItem('AI 翻译', '', () => showSubPage(container, 'ai-translate')));
-  // Appearance → sub-page
-  settSection.appendChild(acctItem('外观', '', () => showSubPage(container, 'appearance')));
-  // Cache → inline
-  settSection.appendChild(acctItemInline('清除缓存', '', () => {
-    Object.keys(localStorage).forEach(k => { if (k.startsWith('lyric_tr_')) localStorage.removeItem(k); });
-    alert('缓存已清除');
-  }));
+  const settSection = acctSection('设置', [
+    acctItem('播放设置', '', () => showSubPage(container, 'playback')),
+    acctItem('AI 翻译', '', () => showSubPage(container, 'ai-translate')),
+    acctItem('外观', '', () => showSubPage(container, 'appearance')),
+    acctItemInline('清除缓存', '', () => {
+      Object.keys(localStorage).forEach(k => { if (k.startsWith('lyric_tr_')) localStorage.removeItem(k); });
+      alert('缓存已清除');
+    }),
+  ]);
   container.appendChild(settSection);
 
   // ---- About section ----
-  const aboutSection = document.createElement('div');
-  aboutSection.className = 'acct-section';
-  aboutSection.innerHTML = '<div class="acct-section-title">关于</div>';
-  aboutSection.appendChild(acctItem('关于 Purify', '', () => showSubPage(container, 'about')));
+  const aboutSection = acctSection('关于', [
+    acctItem('关于 Purify', '', () => showSubPage(container, 'about')),
+  ]);
   container.appendChild(aboutSection);
 
   // ---- Danger zone ----
-  const dangerSection = document.createElement('div');
-  dangerSection.className = 'acct-section';
-  dangerSection.innerHTML = '<div class="acct-section-title">账户操作</div>';
-  const logout = acctItem('退出登录', '', () => {
+  const logoutItem = acctItem('退出登录', '', () => {
     clearCookie();
     state.loggedIn = false;
     state.userProfile = null;
@@ -225,8 +244,8 @@ function renderMain(container: HTMLElement): void {
     bus.emit('auth:logout');
     renderAccount(container);
   });
-  logout.classList.add('danger');
-  dangerSection.appendChild(logout);
+  logoutItem.classList.add('danger');
+  const dangerSection = acctSection('账户操作', [logoutItem]);
   container.appendChild(dangerSection);
 }
 
@@ -254,18 +273,17 @@ function renderPlaybackSub(container: HTMLElement): void {
   const qualities = ['standard', 'higher', 'exhigh', 'lossless', 'hires'];
   const crossfade = localStorage.getItem('purify_crossfade') === 'true';
 
-  container.appendChild(sectionTitle('音质与播放'));
-
   let qIdx = qualities.indexOf(quality);
-  container.appendChild(acctItem('默认音质', quality, () => {
-    qIdx = (qIdx + 1) % qualities.length;
-    localStorage.setItem('purify_quality', qualities[qIdx]);
-    renderPlaybackSub(container);
-  }));
-
-  container.appendChild(acctToggle('自动播放下一首', crossfade, (v) => {
-    localStorage.setItem('purify_crossfade', String(v));
-  }));
+  container.appendChild(acctSection('音质与播放', [
+    acctItem('默认音质', quality, () => {
+      qIdx = (qIdx + 1) % qualities.length;
+      localStorage.setItem('purify_quality', qualities[qIdx]);
+      renderPlaybackSub(container);
+    }),
+    acctToggle('自动播放下一首', crossfade, (v) => {
+      localStorage.setItem('purify_crossfade', String(v));
+    }),
+  ]));
 }
 
 function renderAISub(container: HTMLElement): void {
@@ -274,30 +292,29 @@ function renderAISub(container: HTMLElement): void {
   const endpoint = localStorage.getItem('purify_ai_endpoint') || 'https://api.openai.com/v1/chat/completions';
   const model = localStorage.getItem('purify_ai_model') || 'gpt-4o-mini';
 
-  container.appendChild(sectionTitle('AI 歌词翻译'));
+  container.appendChild(acctSection('AI 歌词翻译', [
+    acctToggle('启用 AI 翻译', enabled, (v) => {
+      localStorage.setItem('purify_ai_enabled', String(v));
+    }),
+  ]));
 
-  container.appendChild(acctToggle('启用 AI 翻译', enabled, (v) => {
-    localStorage.setItem('purify_ai_enabled', String(v));
-  }));
-
-  // API Key, Endpoint, Model — inline text fields
+  // API Key, Endpoint, Model fields
   const fields = document.createElement('div');
-  fields.style.cssText = 'padding:0 16px;';
+  fields.style.cssText = 'margin:0 16px 16px;';
   fields.innerHTML = `
-    <div style="margin-bottom:12px;">
-      <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">API Key</label>
-      <input id="ai-key" type="password" value="${apiKey}" placeholder="sk-..."
-        style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;">
-    </div>
-    <div style="margin-bottom:12px;">
-      <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">API Endpoint</label>
-      <input id="ai-endpoint" type="text" value="${endpoint}"
-        style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;">
-    </div>
-    <div style="margin-bottom:12px;">
-      <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Model</label>
-      <input id="ai-model" type="text" value="${model}"
-        style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:14px;">
+    <div class="acct-group" style="padding:12px;display:flex;flex-direction:column;gap:10px;">
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">API Key</label>
+        <input id="ai-key" type="password" value="${apiKey}" placeholder="sk-..." class="acct-field">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">API Endpoint</label>
+        <input id="ai-endpoint" type="text" value="${endpoint}" class="acct-field">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Model</label>
+        <input id="ai-model" type="text" value="${model}" class="acct-field">
+      </div>
     </div>
   `;
   container.appendChild(fields);
@@ -310,12 +327,12 @@ function renderAISub(container: HTMLElement): void {
 function renderAppearanceSub(container: HTMLElement): void {
   const isDark = (localStorage.getItem('purify_theme') || 'dark') === 'dark';
 
-  container.appendChild(sectionTitle('主题'));
-
-  container.appendChild(acctToggle('深色主题', isDark, (v) => {
-    localStorage.setItem('purify_theme', v ? 'dark' : 'light');
-    applyTheme(v);
-  }));
+  container.appendChild(acctSection('主题', [
+    acctToggle('深色主题', isDark, (v) => {
+      localStorage.setItem('purify_theme', v ? 'dark' : 'light');
+      applyTheme(v);
+    }),
+  ]));
 }
 
 function renderAboutSub(container: HTMLElement): void {
@@ -345,6 +362,19 @@ function sectionTitle(text: string): HTMLElement {
   return el;
 }
 
+/** Create a section with grouped items */
+function acctSection(title: string, items: HTMLElement[]): HTMLElement {
+  const sec = document.createElement('div');
+  sec.className = 'acct-section';
+  sec.innerHTML = `<div class="acct-section-title">${title}</div>`;
+  const group = document.createElement('div');
+  group.className = 'acct-group';
+  items.forEach((item) => group.appendChild(item));
+  sec.appendChild(group);
+  return sec;
+}
+
+/** Standard item with arrow → sub-page */
 function acctItem(label: string, value: string, onClick: () => void): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.className = 'acct-item';
@@ -357,6 +387,7 @@ function acctItem(label: string, value: string, onClick: () => void): HTMLButton
   return btn;
 }
 
+/** Inline action item — no arrow */
 function acctItemInline(label: string, value: string, onClick: () => void): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.className = 'acct-item';
@@ -368,6 +399,7 @@ function acctItemInline(label: string, value: string, onClick: () => void): HTML
   return btn;
 }
 
+/** Item with toggle switch */
 function acctToggle(label: string, checked: boolean, onChange: (v: boolean) => void): HTMLElement {
   const row = document.createElement('div');
   row.className = 'acct-item';
@@ -376,14 +408,13 @@ function acctToggle(label: string, checked: boolean, onChange: (v: boolean) => v
 
   const toggle = document.createElement('button');
   toggle.className = 'acct-toggle' + (checked ? ' on' : '');
-  toggle.addEventListener('click', () => {
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
     const now = !toggle.classList.contains('on');
     toggle.classList.toggle('on', now);
     onChange(now);
   });
   row.appendChild(toggle);
-
-  row.addEventListener('mouseenter', () => { row.style.background = 'var(--bg-secondary)'; });
   return row;
 }
 
@@ -431,17 +462,18 @@ async function fetchAccountInfo(wrap: HTMLElement): Promise<void> {
     }
 
     wrap.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'acct-info-card';
     rows.forEach((r) => {
       const row = document.createElement('div');
       row.className = 'acct-item';
-      row.style.cursor = 'default';
       row.innerHTML = `
         <span class="acct-item-label">${r.label}</span>
-        <span class="acct-item-value" style="${r.cls ? '' : ''}">${r.cls ? `<span class="music-badge ${r.cls}" style="font-size:11px;padding:1px 8px;">${r.value}</span>` : r.value}</span>
+        <span class="acct-item-value">${r.cls ? `<span class="music-badge ${r.cls}" style="font-size:11px;padding:1px 8px;">${r.value}</span>` : r.value}</span>
       `;
-      row.addEventListener('mouseenter', () => { row.style.background = 'var(--bg-secondary)'; });
-      wrap.appendChild(row);
+      card.appendChild(row);
     });
+    wrap.appendChild(card);
 
   } catch {
     wrap.innerHTML = '<div style="padding:12px 16px;" class="text-muted text-sm">加载失败</div>';
