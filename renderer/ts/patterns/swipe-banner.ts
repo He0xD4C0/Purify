@@ -183,16 +183,48 @@ export class SwipeBanner {
   }
 
   next(): void {
+    this.syncCurrentFromScroll();
     this.goTo((this.current + 1) % this.items.length);
   }
 
   prev(): void {
+    this.syncCurrentFromScroll();
     this.goTo((this.current - 1 + this.items.length) % this.items.length);
   }
 
-  private bindTouch(): void {
-    if (!this.track) return;
+  // Read scrollLeft and determine which slide's center is closest to viewport center
+  private syncCurrentFromScroll(): void {
+    if (!this.viewport || !this.track) return;
+    const scrollLeft = this.viewport.scrollLeft;
+    const vw = this.viewport.offsetWidth;
+    const vpCenter = vw / 2;
+    const padLeft = parseInt(getComputedStyle(this.track).paddingLeft) || 0;
+    const gap = this.getGap();
+    const slides = this.track.querySelectorAll('.banner-slide') as NodeListOf<HTMLElement>;
+    if (slides.length === 0) return;
 
+    let bestIdx = 0;
+    let bestDist = Infinity;
+    let cumX = padLeft - scrollLeft;
+
+    for (let i = 0; i < slides.length; i++) {
+      const sw = slides[i].offsetWidth;
+      const center = cumX + sw / 2;
+      const dist = Math.abs(center - vpCenter);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+      cumX += sw + gap;
+    }
+
+    this.current = bestIdx;
+  }
+
+  private bindTouch(): void {
+    if (!this.track || !this.viewport) return;
+
+    // Touch events
     this.track.addEventListener('touchstart', (e: TouchEvent) => {
       this.touchStartX = e.touches[0].clientX;
       this.touchStartY = e.touches[0].clientY;
@@ -210,7 +242,6 @@ export class SwipeBanner {
         e.preventDefault();
         this.dragOffset = dx;
 
-        // Drag the scroll position directly
         const gap = this.getGap();
         const slides = this.track!.querySelectorAll('.banner-slide');
         let baseScroll = 0;
@@ -224,16 +255,30 @@ export class SwipeBanner {
 
     this.track.addEventListener('touchend', () => {
       if (this.isDragging) {
-        if (Math.abs(this.dragOffset) > 60) {
-          if (this.dragOffset > 0) this.prev();
-          else this.next();
-        } else {
-          this.updatePosition(true);
-        }
+        this.syncCurrentFromScroll();
+        this.updatePosition(true);
         this.isDragging = false;
       }
       this.startAuto();
     });
+
+    // Trackpad / mousewheel scroll on the viewport
+    let scrollTimer: number | null = null;
+    this.viewport.addEventListener('scroll', () => {
+      // Only respond if this wasn't triggered programmatically
+      if (this.isDragging) return;
+
+      this.stopAuto();
+      if (scrollTimer) clearTimeout(scrollTimer);
+
+      // After scrolling stops, snap to nearest and restart timer
+      scrollTimer = window.setTimeout(() => {
+        this.syncCurrentFromScroll();
+        this.updatePosition(true);
+        this.renderDots();
+        this.startAuto();
+      }, 500);
+    }, { passive: true });
   }
 
   startAuto(): void {
