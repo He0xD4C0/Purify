@@ -52,6 +52,7 @@ html, body {
 #search-bar {
   display: flex;
   align-items: center;
+  gap: 10px;
   padding: 8px 16px;
   background: var(--bg-primary);
   order: 0;
