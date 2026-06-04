@@ -72,10 +72,23 @@ export function renderSongList(
       row.appendChild(document.createElement('span'));
     }
 
-    // ---- Title (click = play) ----
+    // ---- Title (click = play, contains text + badge) ----
     const titleEl = document.createElement('span');
     titleEl.className = 'song-title';
-    titleEl.textContent = track.name;
+
+    const titleText = document.createElement('span');
+    titleText.className = 'song-title-text';
+    titleText.textContent = track.name;
+
+    titleEl.appendChild(titleText);
+
+    // Badge inline inside title
+    if (options.showBadge !== false) {
+      const status = track.status || detectStatus(track.fee || 0, track.privilege);
+      const badge = renderBadge(status);
+      if (badge) titleEl.appendChild(badge);
+    }
+
     titleEl.addEventListener('click', (e) => {
       e.stopPropagation();
       options.onPlay?.(track, i);
@@ -132,20 +145,6 @@ export function renderSongList(
     durEl.className = 'song-duration';
     durEl.textContent = formatDuration(track.duration);
     row.appendChild(durEl);
-
-    // ---- Badge ----
-    if (options.showBadge !== false) {
-      const badgeWrap = document.createElement('span');
-      badgeWrap.className = 'song-badge';
-      if (track.status) {
-        badgeWrap.appendChild(renderBadge(track.status));
-      } else if (track.fee !== undefined || track.privilege) {
-        badgeWrap.appendChild(renderBadge(detectStatus(track.fee || 0, track.privilege)));
-      }
-      row.appendChild(badgeWrap);
-    } else {
-      row.appendChild(document.createElement('span'));
-    }
 
     // Mobile: click anywhere on row to play
     row.addEventListener('click', (e) => {

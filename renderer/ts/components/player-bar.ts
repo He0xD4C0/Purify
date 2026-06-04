@@ -141,7 +141,8 @@ export function initPlayerBar(): void {
 
     badgeWrap.innerHTML = '';
     const status = detectStatus(track.fee || 0, track.privilege);
-    badgeWrap.appendChild(renderBadge(status));
+    const b = renderBadge(status);
+    if (b) badgeWrap.appendChild(b);
   }
 
   function updateTime(time: number): void {

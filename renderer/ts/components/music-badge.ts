@@ -11,7 +11,10 @@ const STATUS_LABELS: Record<MusicStatus, string> = {
   unavailable: '不可用',
 };
 
-export function renderBadge(status: MusicStatus): HTMLElement {
+export function renderBadge(status: MusicStatus): HTMLElement | null {
+  // Don't render badge for free songs
+  if (status === 'free') return null;
+
   const span = document.createElement('span');
   span.className = `music-badge ${status}`;
   span.textContent = STATUS_LABELS[status];

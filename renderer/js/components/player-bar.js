@@ -130,7 +130,9 @@ export function initPlayerBar() {
         artistEl.textContent = track.artists.map((a) => a.name).join('/');
         badgeWrap.innerHTML = '';
         const status = detectStatus(track.fee || 0, track.privilege);
-        badgeWrap.appendChild(renderBadge(status));
+        const b = renderBadge(status);
+        if (b)
+            badgeWrap.appendChild(b);
     }
     function updateTime(time) {
         if (!state.currentTrack)

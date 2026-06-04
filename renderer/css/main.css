@@ -221,7 +221,7 @@ html, body {
 
 .song-list .song-row {
   display: grid;
-  grid-template-columns: 32px 48px 1fr 1fr 72px 72px 60px;
+  grid-template-columns: 32px 48px 1fr 1fr 72px 72px;
   gap: 8px;
   align-items: center;
   padding: 8px 12px;
@@ -266,12 +266,24 @@ html, body {
 }
 
 .song-list .song-row .song-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   font-size: 14px;
   font-weight: 500;
+  cursor: pointer;
+}
+
+.song-list .song-row .song-title .song-title-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: pointer;
+  flex-shrink: 1;
+}
+
+.song-list .song-row .song-title .music-badge {
+  flex-shrink: 0;
 }
 
 .song-list .song-row .song-artist {

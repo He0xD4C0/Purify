@@ -8,6 +8,9 @@ const STATUS_LABELS = {
     unavailable: '不可用',
 };
 export function renderBadge(status) {
+    // Don't render badge for free songs
+    if (status === 'free')
+        return null;
     const span = document.createElement('span');
     span.className = `music-badge ${status}`;
     span.textContent = STATUS_LABELS[status];
