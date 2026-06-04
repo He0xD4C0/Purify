@@ -3,10 +3,8 @@ const encrypt = require('./crypto')
 const CryptoJS = require('crypto-js')
 const { default: axios } = require('axios')
 const logger = require('./logger')
-const { PacProxyAgent } = require('pac-proxy-agent')
 const http = require('http')
 const https = require('https')
-const tunnel = require('tunnel')
 const fs = require('fs')
 const path = require('path')
 const tmpPath = require('os').tmpdir()
@@ -342,40 +340,7 @@ const createRequest = (uri, data, options) => {
       settings.responseType = 'arraybuffer'
     }
 
-    // 代理处理
-    if (options.proxy) {
-      if (options.proxy.indexOf('pac') > -1) {
-        const agent = new PacProxyAgent(options.proxy)
-        settings.httpAgent = agent
-        settings.httpsAgent = agent
-      } else {
-        try {
-          const purl = new URL(options.proxy)
-          if (purl.hostname) {
-            const isHttps = purl.protocol === 'https:'
-            const agent = tunnel[isHttps ? 'httpsOverHttp' : 'httpOverHttp']({
-              proxy: {
-                host: purl.hostname,
-                port: purl.port || 80,
-                proxyAuth:
-                  purl.username && purl.password
-                    ? purl.username + ':' + purl.password
-                    : '',
-              },
-            })
-            settings.httpsAgent = agent
-            settings.httpAgent = agent
-            settings.proxy = false
-          } else {
-            console.error('代理配置无效,不使用代理')
-          }
-        } catch (e) {
-          console.error('代理URL解析失败:', e.message)
-        }
-      }
-    } else {
-      settings.proxy = false
-    }
+    settings.proxy = false
     // console.log(settings.headers);
     axios(settings)
       .then((res) => {

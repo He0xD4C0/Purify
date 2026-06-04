@@ -1,31 +1,18 @@
 {
-    "compilerOptions": {
-      "target": "ES2015",
-      "module": "commonjs",
-      "experimentalDecorators": true,
-      "ignoreDeprecations": "6.0",
-      "moduleResolution": "node",
-      "lib": [
-        "esnext",
-        "esnext.asynciterable",
-        "dom"
-      ],
-      "esModuleInterop": true,
-      "allowJs": true,
-      "sourceMap": true,
-      "strict": true,
-      "noEmit": true,
-      "baseUrl": ".",
-      "paths": {
-        "~/*": [
-          "./*"
-        ],
-        "@/*": [
-          "./*"
-        ]
-      },
-    },
-    "exclude": [
-      "node_modules"
-    ]
-  }
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "outDir": "renderer/js",
+    "rootDir": "renderer/ts",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": false,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+  },
+  "include": ["renderer/ts/**/*.ts"],
+  "exclude": ["node_modules", "_deprecated"]
+}
