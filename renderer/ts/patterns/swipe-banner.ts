@@ -37,14 +37,18 @@ export class SwipeBanner {
     this.viewport = document.createElement('div');
     this.viewport.className = 'banner-viewport';
 
-    // Only show gradient masks on touch devices
-    if (this.isTouchDevice()) {
-      this.viewport.classList.add('with-masks');
-    }
-
     this.track = document.createElement('div');
     this.track.className = 'banner-track';
     this.viewport.appendChild(this.track);
+
+    // Gradient mask overlays — left and right
+    const maskLeft = document.createElement('div');
+    maskLeft.className = 'banner-mask banner-mask-left';
+    this.viewport.appendChild(maskLeft);
+
+    const maskRight = document.createElement('div');
+    maskRight.className = 'banner-mask banner-mask-right';
+    this.viewport.appendChild(maskRight);
 
     this.dots = document.createElement('div');
     this.dots.className = 'banner-dots';
@@ -145,9 +149,28 @@ export class SwipeBanner {
     this.viewport.style.scrollBehavior = animate ? 'smooth' : 'auto';
     this.viewport.scrollLeft = scrollTarget;
 
+    // Update masks
+    this.updateMasks();
+
     // Update dots
     const dots = this.container.querySelectorAll('.banner-dot');
     dots.forEach((d, i) => d.classList.toggle('active', i === this.current));
+  }
+
+  private updateMasks(): void {
+    if (!this.viewport || !this.track) return;
+    const slides = this.track.querySelectorAll('.banner-slide') as NodeListOf<HTMLElement>;
+    if (!slides[this.current]) return;
+
+    const currentSlide = slides[this.current];
+    const vw = this.viewport.offsetWidth;
+    const imageW = currentSlide.offsetWidth;
+    const maskW = Math.max(0, (vw - imageW) / 2);
+
+    const maskLeft = this.viewport.querySelector('.banner-mask-left') as HTMLElement;
+    const maskRight = this.viewport.querySelector('.banner-mask-right') as HTMLElement;
+    if (maskLeft) maskLeft.style.width = `${maskW}px`;
+    if (maskRight) maskRight.style.width = `${maskW}px`;
   }
 
   private getGap(): number {

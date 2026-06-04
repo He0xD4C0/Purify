@@ -319,24 +319,21 @@ html, body {
   display: none;
 }
 
-/* Gradient masks on edges — only on touch devices */
-.banner-viewport.with-masks::before,
-.banner-viewport.with-masks::after {
-  content: '';
+/* Gradient masks on left/right edges — width set by JS */
+.banner-mask {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 60px;
   z-index: 2;
   pointer-events: none;
 }
 
-.banner-viewport.with-masks::before {
+.banner-mask-left {
   left: 0;
   background: linear-gradient(to right, var(--bg-primary), transparent);
 }
 
-.banner-viewport.with-masks::after {
+.banner-mask-right {
   right: 0;
   background: linear-gradient(to left, var(--bg-primary), transparent);
 }
