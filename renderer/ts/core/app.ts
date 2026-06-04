@@ -208,7 +208,6 @@ export function playFromQueue(index: number): void {
     state.queueIndex = index;
     state.currentTrack = state.queue[index];
     audioEngine.play(state.currentTrack);
-    bus.emit('player:track-change', state.currentTrack);
   }
 }
 
@@ -228,8 +227,8 @@ export function playTrack(track: Track, queue?: Track[]): void {
   }
   state.currentTrack = track;
   state.playing = true;
+  // audioEngine.play() is async and will emit player:track-change on success
   audioEngine.play(track);
-  bus.emit('player:track-change', track);
 }
 
 export function formatTime(seconds: number): string {

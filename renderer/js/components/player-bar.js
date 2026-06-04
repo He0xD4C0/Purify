@@ -59,14 +59,31 @@ export function initPlayerBar() {
     const modeBtn = bar.querySelector('[data-action="mode"]');
     // Set initial placeholder
     setPlaceholder(true);
-    // ============== Progress bar — click to seek ==============
-    track.addEventListener('click', (e) => {
+    // ============== Progress bar — click + drag to seek ==============
+    function pctFromEvent(e) {
+        const rect = track.getBoundingClientRect();
+        return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    }
+    function seekByEvent(e) {
         if (!state.currentTrack)
             return;
-        const rect = track.getBoundingClientRect();
-        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        const time = pct * (state.currentTrack.duration / 1000);
+        const time = pctFromEvent(e) * (state.currentTrack.duration / 1000);
         bus.emit('player:seek-to', time);
+    }
+    track.addEventListener('mousedown', (e) => {
+        if (!state.currentTrack)
+            return;
+        e.preventDefault();
+        seekByEvent(e);
+        function onMove(ev) {
+            seekByEvent(ev);
+        }
+        function onUp() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
     });
     // ============== Event handlers ==============
     function updateTrack(track) {

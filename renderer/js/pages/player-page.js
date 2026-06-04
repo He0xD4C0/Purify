@@ -330,7 +330,6 @@ function renderQueue() {
             state.queueIndex = i;
             state.currentTrack = track;
             audioEngine.play(track);
-            bus.emit('player:track-change', track);
         });
         container.appendChild(row);
     });

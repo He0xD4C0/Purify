@@ -92,6 +92,8 @@ class AudioEngine {
         }
         this.audio.src = url;
         await this.audio.play();
+        // Notify UI that playback is ready
+        bus.emit('player:track-change', track);
         // Preload next
         this.preloadNext();
     }
@@ -138,7 +140,6 @@ class AudioEngine {
             if (state.queue.length > 0 && state.queueIndex >= 0) {
                 const track = state.queue[state.queueIndex];
                 this.play(track);
-                bus.emit('player:track-change', track);
             }
             return;
         }
@@ -166,7 +167,6 @@ class AudioEngine {
         state.queueIndex = nextIdx;
         state.currentTrack = queue[nextIdx];
         this.play(state.currentTrack);
-        bus.emit('player:track-change', state.currentTrack);
     }
     playPrev() {
         const { queue, queueIndex } = state;
@@ -176,7 +176,6 @@ class AudioEngine {
         state.queueIndex = prevIdx;
         state.currentTrack = queue[prevIdx];
         this.play(state.currentTrack);
-        bus.emit('player:track-change', state.currentTrack);
     }
     seek(offset) {
         this.audio.currentTime = Math.max(0, Math.min(this.audio.currentTime + offset, this.audio.duration || 0));
