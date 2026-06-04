@@ -557,12 +557,14 @@
   }
 
   .song-list .song-row {
-    grid-template-columns: 32px 40px 1fr 72px 56px;
+    grid-template-columns: 32px 40px 1fr 56px;
     gap: 6px;
+    cursor: pointer;
   }
 
   .song-list .song-row .song-artist,
-  .song-list .song-row .song-duration {
+  .song-list .song-row .song-duration,
+  .song-list .song-row .song-actions {
     display: none;
   }
 }

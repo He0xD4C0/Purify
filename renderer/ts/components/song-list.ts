@@ -147,6 +147,15 @@ export function renderSongList(
       row.appendChild(document.createElement('span'));
     }
 
+    // Mobile: click anywhere on row to play
+    row.addEventListener('click', (e) => {
+      if (window.innerWidth >= 900) return; // desktop uses cover/title clicks only
+      // Don't fire if user clicked an action button
+      const target = e.target as HTMLElement;
+      if (target.closest('.song-actions')) return;
+      options.onPlay?.(track, i);
+    });
+
     list.appendChild(row);
   });
 
