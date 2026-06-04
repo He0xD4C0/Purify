@@ -221,7 +221,7 @@ html, body {
 
 .song-list .song-row {
   display: grid;
-  grid-template-columns: 32px 48px 1fr 1fr 72px 60px 64px;
+  grid-template-columns: 32px 48px 1fr 1fr 72px 72px 60px;
   gap: 8px;
   align-items: center;
   padding: 8px 12px;

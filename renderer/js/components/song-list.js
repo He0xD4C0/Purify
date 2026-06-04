@@ -57,6 +57,39 @@ export function renderSongList(tracks, options) {
         artistEl.textContent = track.artists.map((a) => a.name).join('/');
         row.appendChild(titleEl);
         row.appendChild(artistEl);
+        // ---- Actions (between artist and duration) ----
+        const actions = document.createElement('div');
+        actions.className = 'song-actions';
+        const playBtn = document.createElement('button');
+        playBtn.className = 'sa-btn play-action';
+        playBtn.title = '播放';
+        playBtn.innerHTML = ICONS.play;
+        playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            options.onPlay?.(track, i);
+        });
+        actions.appendChild(playBtn);
+        const likeBtn = document.createElement('button');
+        likeBtn.className = 'sa-btn';
+        likeBtn.title = '喜欢';
+        likeBtn.innerHTML = ICONS.heart;
+        likeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bus.emit('player:like-toggle', track.id);
+        });
+        actions.appendChild(likeBtn);
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'sa-btn';
+        nextBtn.title = '下一首播放';
+        nextBtn.innerHTML = ICONS.next;
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const t = track;
+            state.queue.splice(state.queueIndex + 1, 0, t);
+            bus.emit('queue:changed', state.queue);
+        });
+        actions.appendChild(nextBtn);
+        row.appendChild(actions);
         // ---- Duration ----
         const durEl = document.createElement('span');
         durEl.className = 'song-duration';
@@ -77,43 +110,6 @@ export function renderSongList(tracks, options) {
         else {
             row.appendChild(document.createElement('span'));
         }
-        // ---- Actions column (hover-reveal) ----
-        const actions = document.createElement('div');
-        actions.className = 'song-actions';
-        // Play button
-        const playBtn = document.createElement('button');
-        playBtn.className = 'sa-btn play-action';
-        playBtn.title = '播放';
-        playBtn.innerHTML = ICONS.play;
-        playBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            options.onPlay?.(track, i);
-        });
-        actions.appendChild(playBtn);
-        // Like button
-        const likeBtn = document.createElement('button');
-        likeBtn.className = 'sa-btn';
-        likeBtn.title = '喜欢';
-        likeBtn.innerHTML = ICONS.heart;
-        likeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            bus.emit('player:like-toggle', track.id);
-        });
-        actions.appendChild(likeBtn);
-        // Play next button
-        const nextBtn = document.createElement('button');
-        nextBtn.className = 'sa-btn';
-        nextBtn.title = '下一首播放';
-        nextBtn.innerHTML = ICONS.next;
-        nextBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Insert after current queue index
-            const t = track;
-            state.queue.splice(state.queueIndex + 1, 0, t);
-            bus.emit('queue:changed', state.queue);
-        });
-        actions.appendChild(nextBtn);
-        row.appendChild(actions);
         list.appendChild(row);
     });
     options.container.innerHTML = '';
