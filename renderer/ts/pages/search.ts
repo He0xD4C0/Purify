@@ -47,26 +47,7 @@ export function renderSearch(container: HTMLElement, query: string): void {
   fwdBtn.style.cssText = 'width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:50%;color:var(--text-secondary);cursor:pointer;';
   fwdBtn.addEventListener('click', () => history.forward());
 
-  const FWD_KEY = 'purify_search_fwd';
-
-  // On render: if we arrived via back-navigation from search, enable forward
-  const canGoForward = sessionStorage.getItem(FWD_KEY) === '1';
-  sessionStorage.removeItem(FWD_KEY);
-
-  function updateNavButtons(): void {
-    backBtn.style.opacity = history.length > 1 ? '' : '0.35';
-    fwdBtn.style.opacity = canGoForward ? '' : '0.35';
-    (fwdBtn as HTMLButtonElement).disabled = !canGoForward;
-  }
-
-  // When leaving search (going back), set flag so next render knows forward exists
-  window.addEventListener('popstate', () => {
-    if (!location.hash.startsWith('#search')) {
-      sessionStorage.setItem(FWD_KEY, '1');
-    }
-  });
-
-  updateNavButtons();
+  // Back/forward — browser handles no-op gracefully if no history
 
   // ---- Header row: nav buttons + title ----
   const titleBar = document.createElement('div');
