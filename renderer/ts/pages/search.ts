@@ -31,7 +31,7 @@ export function renderSearch(container: HTMLElement, query: string): void {
   // ---- Nav: back / forward ----
   const navBar = document.createElement('div');
   navBar.className = 'search-nav-bar';
-  navBar.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:16px;';
+  navBar.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
   const backBtn = document.createElement('button');
   backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>';
@@ -60,16 +60,20 @@ export function renderSearch(container: HTMLElement, query: string): void {
 
   updateNavButtons();
 
+  // ---- Header row: nav buttons + title ----
+  const titleBar = document.createElement('div');
+  titleBar.className = 'search-nav-bar';
+  titleBar.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:20px;';
+
   navBar.appendChild(backBtn);
   navBar.appendChild(fwdBtn);
-  container.appendChild(navBar);
+  titleBar.appendChild(navBar);
 
-  // ---- Header ----
-  const header = document.createElement('div');
-  header.className = 'search-header';
-  header.style.cssText = 'display:flex;align-items:baseline;gap:12px;margin-bottom:20px;';
-  header.innerHTML = `<h2 style="margin:0;font-size:20px;">${query}</h2>`;
-  container.appendChild(header);
+  const title = document.createElement('h2');
+  title.style.cssText = 'margin:0;font-size:20px;';
+  title.textContent = query;
+  titleBar.appendChild(title);
+  container.appendChild(titleBar);
 
   // ---- Tabs ----
   const tabBar = document.createElement('div');
