@@ -200,15 +200,10 @@ async function checkLoginStatus(): Promise<void> {
       };
       state.vipType = res.data.profile?.vipType === 11 ? 'svip' : res.data.profile?.vipType === 10 ? 'vip' : 'none';
       bus.emit('auth:login', state.userProfile);
-      return;
     }
-    // Account is null — cookie expired or invalid
-    clearCookie();
   } catch {
-    // API failed — cookie likely invalid
-    clearCookie();
+    state.loggedIn = false;
   }
-  state.loggedIn = false;
 }
 
 function setupKeyboardShortcuts(): void {
