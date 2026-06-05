@@ -107,8 +107,9 @@ export async function init() {
         state.loggedIn = auth.loggedIn;
         state.userProfile = auth.userProfile;
         state.vipType = auth.vipType;
-        // Re-render: auth state may have changed
         renderContent(state.currentPage);
+    }).catch((e) => {
+        console.warn('[Auth] checkLogin failed:', e);
     });
     // Set up router
     router.register('home', () => navigateTo('home'));

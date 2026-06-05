@@ -132,8 +132,9 @@ export async function init(): Promise<void> {
     state.loggedIn = auth.loggedIn;
     state.userProfile = auth.userProfile;
     state.vipType = auth.vipType;
-    // Re-render: auth state may have changed
     renderContent(state.currentPage);
+  }).catch((e) => {
+    console.warn('[Auth] checkLogin failed:', e);
   });
 
   // Set up router
