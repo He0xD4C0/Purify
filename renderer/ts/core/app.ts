@@ -118,6 +118,8 @@ export async function init(): Promise<void> {
     state.loggedIn = true;
     state.userProfile = profile;
     state.vipType = auth.vipType;
+    // Re-render current page with logged-in state
+    renderContent(state.currentPage);
   });
   bus.on('auth:logout', () => {
     state.loggedIn = false;
@@ -125,11 +127,13 @@ export async function init(): Promise<void> {
     state.vipType = 'none';
   });
 
-  // Check login — async, does NOT block UI
+  // Check login — async, re-render current page when done
   checkLogin().then(() => {
     state.loggedIn = auth.loggedIn;
     state.userProfile = auth.userProfile;
     state.vipType = auth.vipType;
+    // Re-render: auth state may have changed
+    renderContent(state.currentPage);
   });
 
   // Set up router
