@@ -190,7 +190,7 @@ function renderMain(container) {
     }
     else {
         // Placeholder info rows — all except nickname (shown in hero)
-        const placeholders = ['用户 ID', '签名', 'VIP', '等级', '性别', '生日', '地区', '手机绑定', '邮箱绑定'];
+        const placeholders = ['用户 ID', '签名', 'VIP', '等级', '性别', '生日', '手机绑定', '邮箱绑定'];
         const card = document.createElement('div');
         card.className = 'acct-info-card';
         placeholders.forEach((label) => {
@@ -421,7 +421,6 @@ async function fetchAccountInfo(wrap) {
             { label: '性别', value: profile.gender === 1 ? '男' : profile.gender === 2 ? '女' : '未设置' },
             { label: '生日', value: profile.birthday && profile.birthday > 0
                     ? new Date(profile.birthday).toISOString().split('T')[0] : '未设置' },
-            { label: '地区', value: [profile.province, profile.city].filter(Boolean).join(' ') || '未设置' },
         ];
         // Account binding status
         if (acct.account) {
