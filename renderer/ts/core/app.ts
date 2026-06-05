@@ -1,6 +1,5 @@
 import { bus } from './event-bus.js';
 import { router } from './router.js';
-import { storage } from './storage.js';
 import { api } from './api.js';
 import { initNavbar } from '../components/navbar.js';
 import { initPlayerBar } from '../components/player-bar.js';
@@ -58,19 +57,16 @@ export const state: AppState = {
 
 // ---- Cookie management ----
 function restoreCookie(): void {
-  const cookie = storage.get<string>('cookie');
-  if (cookie) {
-    localStorage.setItem('purify_cookie', cookie);
-  }
+  // Cookie is stored as raw string, already at purify_cookie for API use
+  // No action needed — api.ts reads localStorage.getItem('purify_cookie') directly
 }
 
 export function saveCookie(cookie: string): void {
-  storage.set('cookie', cookie);
+  // Store raw cookie string directly — do NOT JSON-serialize
   localStorage.setItem('purify_cookie', cookie);
 }
 
 export function clearCookie(): void {
-  storage.remove('cookie');
   localStorage.removeItem('purify_cookie');
 }
 
