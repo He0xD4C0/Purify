@@ -1,6 +1,5 @@
 import { bus } from './event-bus.js';
 import { router } from './router.js';
-import { api } from './api.js';
 import { initNavbar } from '../components/navbar.js';
 import { initPlayerBar } from '../components/player-bar.js';
 import { initSearchBar } from '../components/search-bar.js';
@@ -13,6 +12,7 @@ import { renderSearch } from '../pages/search.js';
 import { renderPlayerPage } from '../pages/player-page.js';
 import { renderLoginPanel } from '../components/login-panel.js';
 import { audioEngine } from '../player/audio-engine.js';
+import { auth, checkLogin, clearCookie, saveCookie } from './auth.js';
 
 // ---- App State ----
 export interface Track {
@@ -55,20 +55,8 @@ export const state: AppState = {
   currentTime: 0,
 };
 
-// ---- Cookie management ----
-function restoreCookie(): void {
-  // Cookie is stored as raw string, already at purify_cookie for API use
-  // No action needed — api.ts reads localStorage.getItem('purify_cookie') directly
-}
-
-export function saveCookie(cookie: string): void {
-  // Store raw cookie string directly — do NOT JSON-serialize
-  localStorage.setItem('purify_cookie', cookie);
-}
-
-export function clearCookie(): void {
-  localStorage.removeItem('purify_cookie');
-}
+// ---- Cookie re-exports (from auth module) ----
+export { saveCookie, clearCookie };
 
 // ---- Page rendering ----
 function getContent(): HTMLElement {
@@ -120,15 +108,29 @@ function showPlayerOverlay(): void {
 
 // ---- Init ----
 export async function init(): Promise<void> {
-  restoreCookie();
-
   // Init UI chrome
   initSearchBar();
   initNavbar();
   initPlayerBar();
 
-  // Check login status asynchronously — does NOT block UI
-  checkLoginStatus();
+  // Sync auth state to app state on login
+  bus.on('auth:login', (profile) => {
+    state.loggedIn = true;
+    state.userProfile = profile;
+    state.vipType = auth.vipType;
+  });
+  bus.on('auth:logout', () => {
+    state.loggedIn = false;
+    state.userProfile = null;
+    state.vipType = 'none';
+  });
+
+  // Check login — async, does NOT block UI
+  checkLogin().then(() => {
+    state.loggedIn = auth.loggedIn;
+    state.userProfile = auth.userProfile;
+    state.vipType = auth.vipType;
+  });
 
   // Set up router
   router.register('home', () => navigateTo('home'));
@@ -182,29 +184,6 @@ export async function init(): Promise<void> {
 
   // Keyboard shortcuts
   setupKeyboardShortcuts();
-}
-
-export async function checkLoginStatus(): Promise<void> {
-  try {
-    const res = await api.loginStatus();
-    if (res.data?.account) {
-      state.loggedIn = true;
-      state.userProfile = {
-        userId: res.data.account.id,
-        nickname: res.data.profile?.nickname || '',
-        avatarUrl: res.data.profile?.avatarUrl || '',
-      };
-      state.vipType = res.data.profile?.vipType === 11 ? 'svip' : res.data.profile?.vipType === 10 ? 'vip' : 'none';
-      bus.emit('auth:login', state.userProfile);
-      return;
-    }
-    // Account is null — cookie expired or invalid
-    clearCookie();
-  } catch {
-    // API failed — cookie likely invalid
-    clearCookie();
-  }
-  state.loggedIn = false;
 }
 
 function setupKeyboardShortcuts(): void {

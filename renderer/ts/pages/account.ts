@@ -2,7 +2,8 @@
 
 import { router } from '../core/router.js';
 import { bus } from '../core/event-bus.js';
-import { state, clearCookie } from '../core/app.js';
+import { state } from '../core/app.js';
+import { auth, logout } from '../core/auth.js';
 import { api } from '../core/api.js';
 
 // ---- Sub-page state (within account) ----
@@ -130,8 +131,8 @@ export function renderAccount(container: HTMLElement): void {
 // ============ Main account page ============
 function renderMain(container: HTMLElement): void {
   container.innerHTML = '';
-  const loggedIn = state.loggedIn;
-  const profile = state.userProfile;
+  const loggedIn = auth.loggedIn;
+  const profile = auth.userProfile;
 
   // ---- Profile hero (centered) ----
   const hero = document.createElement('div');
@@ -158,7 +159,7 @@ function renderMain(container: HTMLElement): void {
   if (loggedIn) {
     const vipTag = document.getElementById('acct-vip-tag');
     if (vipTag) {
-      const vt = state.vipType;
+      const vt = auth.vipType;
       if (vt === 'svip') vipTag.innerHTML = '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;">黑胶 SVIP</span>';
       else if (vt === 'vip') vipTag.innerHTML = '<span class="music-badge vip" style="font-size:12px;padding:2px 10px;">VIP</span>';
       else vipTag.textContent = '普通用户';
@@ -237,11 +238,7 @@ function renderMain(container: HTMLElement): void {
 
   // ---- Danger zone ----
   const logoutItem = acctItem('退出登录', '', () => {
-    clearCookie();
-    state.loggedIn = false;
-    state.userProfile = null;
-    state.vipType = 'none';
-    bus.emit('auth:logout');
+    logout();
     renderAccount(container);
   });
   logoutItem.classList.add('danger');
@@ -438,7 +435,7 @@ async function fetchAccountInfo(wrap: HTMLElement): Promise<void> {
       ? '年度会员' : '';
 
     const rows: { label: string; value: string; cls?: string }[] = [
-      { label: '用户 ID', value: String(profile.userId || acct.account?.id || state.userProfile?.userId || '--') },
+      { label: '用户 ID', value: String(profile.userId || acct.account?.id || auth.userProfile?.userId || '--') },
       { label: '昵称', value: profile.nickname || '--' },
       { label: '签名', value: profile.signature || '（未设置）' },
       { label: 'VIP', value: vipLabel, cls: vipClass },
@@ -483,7 +480,7 @@ async function fetchAccountInfo(wrap: HTMLElement): Promise<void> {
 // ============ Stats ============
 async function fetchUserStats(): Promise<void> {
   try {
-    const uid = state.userProfile?.userId;
+    const uid = auth.userProfile?.userId;
     if (!uid) return;
     const uidStr = String(uid);
 

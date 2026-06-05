@@ -1,7 +1,7 @@
 // Account page — profile, stats, settings with sub-page navigation
 import { router } from '../core/router.js';
 import { bus } from '../core/event-bus.js';
-import { state, clearCookie } from '../core/app.js';
+import { auth, logout } from '../core/auth.js';
 import { api } from '../core/api.js';
 let activeSubPage = 'main';
 // ---- Styles ----
@@ -124,8 +124,8 @@ export function renderAccount(container) {
 // ============ Main account page ============
 function renderMain(container) {
     container.innerHTML = '';
-    const loggedIn = state.loggedIn;
-    const profile = state.userProfile;
+    const loggedIn = auth.loggedIn;
+    const profile = auth.userProfile;
     // ---- Profile hero (centered) ----
     const hero = document.createElement('div');
     hero.className = 'acct-hero';
@@ -150,7 +150,7 @@ function renderMain(container) {
     if (loggedIn) {
         const vipTag = document.getElementById('acct-vip-tag');
         if (vipTag) {
-            const vt = state.vipType;
+            const vt = auth.vipType;
             if (vt === 'svip')
                 vipTag.innerHTML = '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;">黑胶 SVIP</span>';
             else if (vt === 'vip')
@@ -230,11 +230,7 @@ function renderMain(container) {
     container.appendChild(aboutSection);
     // ---- Danger zone ----
     const logoutItem = acctItem('退出登录', '', () => {
-        clearCookie();
-        state.loggedIn = false;
-        state.userProfile = null;
-        state.vipType = 'none';
-        bus.emit('auth:logout');
+        logout();
         renderAccount(container);
     });
     logoutItem.classList.add('danger');
@@ -417,7 +413,7 @@ async function fetchAccountInfo(wrap) {
         const vipExpire = profile.vipRights?.redVipAnnualCount !== undefined
             ? '年度会员' : '';
         const rows = [
-            { label: '用户 ID', value: String(profile.userId || acct.account?.id || state.userProfile?.userId || '--') },
+            { label: '用户 ID', value: String(profile.userId || acct.account?.id || auth.userProfile?.userId || '--') },
             { label: '昵称', value: profile.nickname || '--' },
             { label: '签名', value: profile.signature || '（未设置）' },
             { label: 'VIP', value: vipLabel, cls: vipClass },
@@ -460,7 +456,7 @@ async function fetchAccountInfo(wrap) {
 // ============ Stats ============
 async function fetchUserStats() {
     try {
-        const uid = state.userProfile?.userId;
+        const uid = auth.userProfile?.userId;
         if (!uid)
             return;
         const uidStr = String(uid);

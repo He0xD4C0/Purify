@@ -2,7 +2,7 @@
 
 import { api } from '../core/api.js';
 import { bus } from '../core/event-bus.js';
-import { saveCookie, state, checkLoginStatus } from '../core/app.js';
+import { auth, saveCookie, checkLogin } from '../core/auth.js';
 import { showModal } from './modal.js';
 
 /** Strip Set-Cookie attributes (Max-Age, Expires, Path, etc.), keep only key=value pairs */
@@ -68,7 +68,7 @@ export function renderLoginPanel(container: HTMLElement, onClose?: () => void): 
         if (res.body?.code === 200 || res.cookie) {
           const rawCookie = Array.isArray(res.cookie) ? res.cookie.join('; ') : res.cookie || '';
           saveCookie(sanitizeCookie(rawCookie));
-          await checkLoginStatus();
+          await checkLogin();
           onClose?.();
         } else {
           showModal('登录失败', res.body?.msg || res.body?.message || '未知错误');
@@ -125,7 +125,7 @@ export function renderLoginPanel(container: HTMLElement, onClose?: () => void): 
             clearInterval(interval);
             const rawCookie = Array.isArray(checkRes.cookie) ? checkRes.cookie.join('; ') : checkRes.cookie || '';
             saveCookie(sanitizeCookie(rawCookie));
-            await checkLoginStatus();
+            await checkLogin();
             onClose?.();
           } else if (code === 800) {
             // Expired

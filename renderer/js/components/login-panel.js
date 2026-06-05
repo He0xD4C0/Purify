@@ -1,6 +1,6 @@
 // Login panel: phone + QR code login
 import { api } from '../core/api.js';
-import { saveCookie, checkLoginStatus } from '../core/app.js';
+import { saveCookie, checkLogin } from '../core/auth.js';
 import { showModal } from './modal.js';
 /** Strip Set-Cookie attributes (Max-Age, Expires, Path, etc.), keep only key=value pairs */
 function sanitizeCookie(raw) {
@@ -54,7 +54,7 @@ export function renderLoginPanel(container, onClose) {
                 if (res.body?.code === 200 || res.cookie) {
                     const rawCookie = Array.isArray(res.cookie) ? res.cookie.join('; ') : res.cookie || '';
                     saveCookie(sanitizeCookie(rawCookie));
-                    await checkLoginStatus();
+                    await checkLogin();
                     onClose?.();
                 }
                 else {
@@ -109,7 +109,7 @@ export function renderLoginPanel(container, onClose) {
                         clearInterval(interval);
                         const rawCookie = Array.isArray(checkRes.cookie) ? checkRes.cookie.join('; ') : checkRes.cookie || '';
                         saveCookie(sanitizeCookie(rawCookie));
-                        await checkLoginStatus();
+                        await checkLogin();
                         onClose?.();
                     }
                     else if (code === 800) {
