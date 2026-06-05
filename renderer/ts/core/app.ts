@@ -184,7 +184,7 @@ export async function init(): Promise<void> {
   setupKeyboardShortcuts();
 }
 
-async function checkLoginStatus(): Promise<void> {
+export async function checkLoginStatus(): Promise<void> {
   try {
     const res = await api.loginStatus();
     if (res.data?.account) {

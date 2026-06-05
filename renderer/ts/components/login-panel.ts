@@ -2,8 +2,17 @@
 
 import { api } from '../core/api.js';
 import { bus } from '../core/event-bus.js';
-import { saveCookie, state } from '../core/app.js';
+import { saveCookie, state, checkLoginStatus } from '../core/app.js';
 import { showModal } from './modal.js';
+
+/** Strip Set-Cookie attributes (Max-Age, Expires, Path, etc.), keep only key=value pairs */
+function sanitizeCookie(raw: string): string {
+  return raw
+    .split(';')
+    .map((s) => s.trim())
+    .filter((s) => s.includes('=') && !/^(Max-Age|Expires|Path|Domain|Secure|HttpOnly|SameSite|Priority|__Host-|__Secure-)/i.test(s))
+    .join('; ');
+}
 
 export function renderLoginPanel(container: HTMLElement, onClose?: () => void): void {
   const panel = document.createElement('div');
@@ -57,11 +66,9 @@ export function renderLoginPanel(container: HTMLElement, onClose?: () => void): 
       try {
         const res = await api.loginCellphone(phone, password);
         if (res.body?.code === 200 || res.cookie) {
-          const cookie = Array.isArray(res.cookie) ? res.cookie.join('; ') : res.cookie || '';
-          saveCookie(cookie);
-          state.loggedIn = true;
-          state.userProfile = res.body?.profile || res.body?.account || null;
-          bus.emit('auth:login', state.userProfile);
+          const rawCookie = Array.isArray(res.cookie) ? res.cookie.join('; ') : res.cookie || '';
+          saveCookie(sanitizeCookie(rawCookie));
+          await checkLoginStatus();
           onClose?.();
         } else {
           showModal('登录失败', res.body?.msg || res.body?.message || '未知错误');
@@ -116,10 +123,9 @@ export function renderLoginPanel(container: HTMLElement, onClose?: () => void): 
           if (code === 803) {
             // Confirmed — login success
             clearInterval(interval);
-            const cookie = Array.isArray(checkRes.cookie) ? checkRes.cookie.join('; ') : checkRes.cookie || '';
-            saveCookie(cookie);
-            state.loggedIn = true;
-            bus.emit('auth:login', state.userProfile);
+            const rawCookie = Array.isArray(checkRes.cookie) ? checkRes.cookie.join('; ') : checkRes.cookie || '';
+            saveCookie(sanitizeCookie(rawCookie));
+            await checkLoginStatus();
             onClose?.();
           } else if (code === 800) {
             // Expired

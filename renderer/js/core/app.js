@@ -149,7 +149,7 @@ export async function init() {
     // Keyboard shortcuts
     setupKeyboardShortcuts();
 }
-async function checkLoginStatus() {
+export async function checkLoginStatus() {
     try {
         const res = await api.loginStatus();
         if (res.data?.account) {
