@@ -139,13 +139,19 @@ function renderMain(container: HTMLElement): void {
   hero.className = 'acct-hero';
 
   if (loggedIn && profile) {
+    // Attach 黑胶SVIP/黑胶VIP badge after nickname
+    const vt = auth.vipType;
+    const vipBadge = vt === 'svip'
+      ? '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;vertical-align:middle;">黑胶SVIP</span>'
+      : vt === 'vip'
+      ? '<span class="music-badge vip" style="font-size:12px;padding:2px 10px;vertical-align:middle;">黑胶VIP</span>'
+      : '';
     hero.innerHTML = `
       <img class="acct-avatar-lg" src="${profile.avatarUrl}?param=200y200" alt="">
-      <div class="acct-name-lg">${profile.nickname}</div>
-      <div class="acct-sub" id="acct-vip-tag"></div>
+      <div class="acct-name-lg">${profile.nickname} ${vipBadge}</div>
+      <div class="acct-sub" style="color:var(--text-secondary);">${profile.signature || ''}</div>
     `;
   } else {
-    // Placeholder — click to login
     hero.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="88" height="88" style="color:var(--text-muted);cursor:pointer;" id="acct-avatar-placeholder">
         <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/>
@@ -156,15 +162,7 @@ function renderMain(container: HTMLElement): void {
   }
   container.appendChild(hero);
 
-  if (loggedIn) {
-    const vipTag = document.getElementById('acct-vip-tag');
-    if (vipTag) {
-      const vt = auth.vipType;
-      if (vt === 'svip') vipTag.innerHTML = '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;">黑胶 SVIP</span>';
-      else if (vt === 'vip') vipTag.innerHTML = '<span class="music-badge vip" style="font-size:12px;padding:2px 10px;">VIP</span>';
-      else vipTag.textContent = '普通用户';
-    }
-  } else {
+  if (!loggedIn) {
     // Wire placeholder clicks → login
     hero.querySelector('#acct-avatar-placeholder')?.addEventListener('click', () => bus.emit('auth:require-login'));
     hero.querySelector('#acct-name-placeholder')?.addEventListener('click', () => bus.emit('auth:require-login'));

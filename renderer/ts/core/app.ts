@@ -28,7 +28,7 @@ export interface Track {
 export interface AppState {
   loggedIn: boolean;
   vipType: 'none' | 'vip' | 'svip';
-  userProfile: { userId: number; nickname: string; avatarUrl: string } | null;
+  userProfile: { userId: number; nickname: string; avatarUrl: string; signature: string } | null;
   currentTrack: Track | null;
   queue: Track[];
   queueIndex: number;

@@ -32,6 +32,7 @@ export async function checkLogin() {
                 userId: res.data.account.id,
                 nickname: res.data.profile?.nickname || '',
                 avatarUrl: res.data.profile?.avatarUrl || '',
+                signature: res.data.profile?.signature || '',
             };
             auth.vipType = res.data.profile?.vipType === 11 ? 'svip'
                 : res.data.profile?.vipType === 10 ? 'vip' : 'none';

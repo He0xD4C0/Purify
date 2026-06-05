@@ -9,6 +9,7 @@ export interface UserProfile {
   userId: number;
   nickname: string;
   avatarUrl: string;
+  signature: string;
 }
 
 export interface AuthState {
@@ -54,6 +55,7 @@ export async function checkLogin(): Promise<void> {
         userId: res.data.account.id,
         nickname: res.data.profile?.nickname || '',
         avatarUrl: res.data.profile?.avatarUrl || '',
+        signature: res.data.profile?.signature || '',
       };
       auth.vipType = res.data.profile?.vipType === 11 ? 'svip'
         : res.data.profile?.vipType === 10 ? 'vip' : 'none';
