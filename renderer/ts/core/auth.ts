@@ -62,10 +62,10 @@ export async function checkLogin(): Promise<void> {
       bus.emit('auth:login', auth.userProfile);
       return;
     }
-    // token expired
+    // Server confirmed token expired/invalid — clear it
     clearCookie();
   } catch {
-    clearCookie();
+    // Network error — keep cookie, keep previous state
   }
   auth.loggedIn = false;
 }
@@ -73,7 +73,7 @@ export async function checkLogin(): Promise<void> {
 // ---- Logout ----
 
 export function logout(): void {
-  clearCookie();
+  auth.loggedIn = false;
   auth.loggedIn = false;
   auth.userProfile = null;
   auth.vipType = 'none';

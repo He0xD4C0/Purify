@@ -39,17 +39,17 @@ export async function checkLogin() {
             bus.emit('auth:login', auth.userProfile);
             return;
         }
-        // token expired
+        // Server confirmed token expired/invalid — clear it
         clearCookie();
     }
     catch {
-        clearCookie();
+        // Network error — keep cookie, keep previous state
     }
     auth.loggedIn = false;
 }
 // ---- Logout ----
 export function logout() {
-    clearCookie();
+    auth.loggedIn = false;
     auth.loggedIn = false;
     auth.userProfile = null;
     auth.vipType = 'none';
