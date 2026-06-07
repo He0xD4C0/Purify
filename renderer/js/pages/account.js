@@ -2,6 +2,7 @@
 import { router } from '../core/router.js';
 import { bus } from '../core/event-bus.js';
 import { auth, logout } from '../core/auth.js';
+import { renderUserVipBadge } from '../components/music-badge.js';
 import { api } from '../core/api.js';
 let activeSubPage = 'main';
 // ---- Styles ----
@@ -130,16 +131,9 @@ function renderMain(container) {
     const hero = document.createElement('div');
     hero.className = 'acct-hero';
     if (loggedIn && profile) {
-        // Attach 黑胶SVIP/黑胶VIP badge after nickname
-        const vt = auth.vipType;
-        const vipBadge = vt === 'svip'
-            ? '<span class="music-badge svip" style="font-size:12px;padding:2px 10px;vertical-align:middle;">黑胶SVIP</span>'
-            : vt === 'vip'
-                ? '<span class="music-badge vip" style="font-size:12px;padding:2px 10px;vertical-align:middle;">黑胶VIP</span>'
-                : '';
         hero.innerHTML = `
       <img class="acct-avatar-lg" src="${profile.avatarUrl}?param=200y200" alt="">
-      <div class="acct-name-lg">${profile.nickname} ${vipBadge}</div>
+      <div class="acct-name-lg" id="acct-nickname-row">${profile.nickname}</div>
       <div class="acct-sub" style="color:var(--text-secondary);">${profile.signature || ''}</div>
     `;
     }
@@ -153,6 +147,15 @@ function renderMain(container) {
     `;
     }
     container.appendChild(hero);
+    // Attach VIP badge after nickname (SVIP/VIP/畅听)
+    if (loggedIn) {
+        const badge = renderUserVipBadge(auth.vipType);
+        if (badge) {
+            const nameRow = document.getElementById('acct-nickname-row');
+            if (nameRow)
+                nameRow.appendChild(badge);
+        }
+    }
     if (!loggedIn) {
         // Wire placeholder clicks → login
         hero.querySelector('#acct-avatar-placeholder')?.addEventListener('click', () => bus.emit('auth:require-login'));

@@ -1,37 +1,50 @@
 // Global music badge — render copyright/VIP status labels anywhere
 
-export type MusicStatus = 'free' | 'vip' | 'svip' | 'purchase' | 'trial' | 'unavailable';
+// ---- Song badge types ----
+export type MusicStatus = 'free' | 'vip' | 'purchase' | 'unavailable';
 
-const LABELS: Record<MusicStatus, string> = {
+const SONG_LABELS: Record<MusicStatus, string> = {
   free: '免费',
   vip: 'VIP',
-  svip: '黑胶SVIP',
-  purchase: '付费',
-  trial: '畅听',
+  purchase: '单曲',
   unavailable: '不可用',
 };
 
-const CLASS_MAP: Record<MusicStatus, string> = {
+const SONG_CLASS: Record<MusicStatus, string> = {
   free: 'free',
   vip: 'vip',
-  svip: 'svip',
   purchase: 'purchase',
-  trial: 'trial',
   unavailable: 'unavailable',
 };
 
+// ---- User VIP badge types ----
+export type UserVipType = 'none' | 'vip' | 'svip' | 'musicbit';
+
+const USER_LABELS: Record<UserVipType, string> = {
+  none: '',
+  vip: '黑胶VIP',
+  svip: '黑胶SVIP',
+  musicbit: '畅听会员',
+};
+
+const USER_CLASS: Record<UserVipType, string> = {
+  none: '',
+  vip: 'vip',
+  svip: 'svip',
+  musicbit: 'vip',
+};
+
 /**
- * Render a badge element for a given music status.
- * Returns null for 'free' status (no badge needed).
- * Use this anywhere a copyright/VIP badge needs to appear.
+ * Render a song badge — VIP / 单曲 / 不可用.
+ * Returns null for 'free' (no badge needed).
  */
 export function renderBadge(status: MusicStatus): HTMLElement | null {
   if (status === 'free') return null;
 
   const span = document.createElement('span');
-  span.className = `music-badge ${CLASS_MAP[status]}`;
-  span.textContent = LABELS[status];
-  span.title = LABELS[status];
+  span.className = `music-badge ${SONG_CLASS[status]}`;
+  span.textContent = SONG_LABELS[status];
+  span.title = SONG_LABELS[status];
 
   if (status === 'purchase') {
     span.style.cursor = 'pointer';
@@ -45,31 +58,29 @@ export function renderBadge(status: MusicStatus): HTMLElement | null {
 }
 
 /**
- * Render a user VIP badge — for attaching after user nickname.
+ * Render user VIP badge — attaches after nickname.
  * Returns null for non-VIP users.
  */
-export function renderUserVipBadge(vipType: 'none' | 'vip' | 'svip'): HTMLElement | null {
+export function renderUserVipBadge(vipType: UserVipType): HTMLElement | null {
   if (vipType === 'none') return null;
 
   const span = document.createElement('span');
-  span.className = `music-badge ${vipType === 'svip' ? 'svip' : 'vip'}`;
-  span.textContent = vipType === 'svip' ? '黑胶SVIP' : '黑胶VIP';
+  span.className = `music-badge ${USER_CLASS[vipType]}`;
+  span.textContent = USER_LABELS[vipType];
   span.title = span.textContent;
   span.style.cssText = 'font-size:12px;padding:2px 10px;vertical-align:middle;margin-left:6px;';
   return span;
 }
 
 /**
- * Detect music status from fee and privilege data.
- * Does NOT depend on user auth state — purely data classification.
+ * Detect song badge type from fee + privilege data.
+ * Pure data classification — no user auth dependency.
  */
 export function detectStatus(fee: number, privilege?: Record<string, unknown>): MusicStatus {
   if (!privilege) {
-    if (fee === 0) return 'free';
-    if (fee === 1) return 'vip';
+    if (fee === 0 || fee === 8) return 'free';
+    if (fee === 1 || fee === 16) return 'vip';
     if (fee === 4) return 'purchase';
-    if (fee === 8) return 'free';
-    if (fee === 16) return 'svip';
     return 'free';
   }
 
@@ -79,11 +90,11 @@ export function detectStatus(fee: number, privilege?: Record<string, unknown>): 
 
   if (st === -200) return 'unavailable';
   if (pl === 0 && dl === 0) return 'unavailable';
-  if (fee === 0 || pl > 0) {
-    if (fee === 0) return 'free';
-    if (fee === 1) return 'vip';
+
+  if (pl > 0) {
+    if (fee === 0 || fee === 8) return 'free';
+    if (fee === 1 || fee === 16) return 'vip';
     if (fee === 4) return 'purchase';
-    if (fee === 16) return 'svip';
     return 'free';
   }
 

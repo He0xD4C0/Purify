@@ -41,31 +41,27 @@ class CopyrightDetector {
       // If play level > 0, the song IS playable at some quality
       if (pl > 0) {
         // Determine the access type based on fee
-        if (fee === 0) return 'free';
-        if (fee === 1) return 'vip';
+        if (fee === 0 || fee === 8) return 'free';
+        if (fee === 1 || fee === 16) return 'vip';
         if (fee === 4) return 'purchase';
-        if (fee === 16) return 'svip';
-        // fee=8 with pl>0 is playable (cloud/restricted but available)
         return 'free';
       }
 
       // pl === 0: cannot play
       if (pl === 0 && dl === 0) return 'unavailable';
 
-      // Has free trial?
+      // Has free trial — treat as free (playable)
       if (freeTrial != null && freeTrial !== undefined) {
-        return 'trial';
+        return 'free';
       }
 
       return 'unavailable';
     }
 
     // No privilege data — fallback to fee only
-    if (fee === 0) return 'free';
-    if (fee === 1) return 'vip';
+    if (fee === 0 || fee === 8) return 'free';
+    if (fee === 1 || fee === 16) return 'vip';
     if (fee === 4) return 'purchase';
-    if (fee === 16) return 'svip';
-    // fee=8 without privilege data — assume playable
     return 'free';
   }
 
