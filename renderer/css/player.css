@@ -472,10 +472,15 @@
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 18px;
   cursor: pointer;
   border-radius: 50%;
   transition: all var(--transition-fast);
+  padding: 0;
+}
+
+.player-controls .pc-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 .player-controls .pc-btn:hover {
@@ -492,7 +497,11 @@
   height: 52px;
   background: var(--accent);
   color: white;
-  font-size: 20px;
+}
+
+.player-controls .pc-btn.play-btn svg {
+  width: 26px;
+  height: 26px;
 }
 
 .player-controls .pc-btn.play-btn:hover {

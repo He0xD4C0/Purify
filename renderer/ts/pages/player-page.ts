@@ -5,6 +5,7 @@ import { state, formatTime, type Track } from '../core/app.js';
 import { audioEngine } from '../player/audio-engine.js';
 import { lyricsEngine } from '../player/lyrics-engine.js';
 import { renderBadge, detectStatus } from '../components/music-badge.js';
+import { SVG } from '../components/player-icons.js';
 
 let lyricsMode: 'original' | 'bilingual' | 'ruby' = 'bilingual';
 
@@ -70,13 +71,13 @@ export function renderPlayerPage(): void {
   const controls = document.createElement('div');
   controls.className = 'player-controls';
   controls.innerHTML = `
-    <button class="pc-btn" data-action="metadata" title="元数据">📋</button>
-    <button class="pc-btn" data-action="prev" title="上一首">⏮</button>
-    <button class="pc-btn play-btn" data-action="play" title="播放/暂停">▶</button>
-    <button class="pc-btn" data-action="next" title="下一首">⏭</button>
-    <button class="pc-btn" data-action="mode" title="播放模式">🔁</button>
-    <button class="pc-btn" data-action="lyrics" title="歌词">📝</button>
-    <button class="pc-btn" data-action="queue" title="队列">📃</button>
+    <button class="pc-btn" data-action="metadata" title="元数据">${SVG.meta}</button>
+    <button class="pc-btn" data-action="prev" title="上一首">${SVG.prev}</button>
+    <button class="pc-btn play-btn" data-action="play" title="播放/暂停">${SVG.play}</button>
+    <button class="pc-btn" data-action="next" title="下一首">${SVG.next}</button>
+    <button class="pc-btn" data-action="mode" id="pc-mode-btn" title="播放模式">${SVG.list}</button>
+    <button class="pc-btn" data-action="lyrics" title="歌词">${SVG.lyrics}</button>
+    <button class="pc-btn" data-action="queue" title="队列">${SVG.queue}</button>
   `;
   page.appendChild(controls);
 
@@ -148,7 +149,16 @@ function createQueuePanel(): HTMLElement {
   const panel = document.createElement('div');
   panel.classList.add('player-panel', 'bottom');
   panel.id = 'panel-queue';
-  panel.innerHTML = '<div class="player-queue" id="player-queue"></div>';
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px;">
+      <span style="font-size:13px;color:var(--text-muted);">播放列表</span>
+      <button id="queue-close-btn" style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;" title="收起">×</button>
+    </div>
+    <div class="player-queue" id="player-queue"></div>
+  `;
+  panel.querySelector('#queue-close-btn')?.addEventListener('click', () => {
+    panel.classList.remove('open');
+  });
   return panel;
 }
 
@@ -167,12 +177,12 @@ function bindControls(page: HTMLElement): void {
   });
 
   // Mode
+  const MODE_ICONS: Record<string, string> = { list: SVG.list, random: SVG.random, single: SVG.single };
   page.querySelector('[data-action="mode"]')?.addEventListener('click', function (this: HTMLElement) {
     const modes: Array<'list'|'random'|'single'> = ['list', 'random', 'single'];
     const idx = modes.indexOf(state.playMode);
     state.playMode = modes[(idx + 1) % modes.length];
-    const icons: Record<string,string> = { list: '🔁', random: '🔀', single: '🔂' };
-    this.textContent = icons[state.playMode];
+    this.innerHTML = MODE_ICONS[state.playMode];
   });
 
   // Panel toggles
@@ -205,7 +215,7 @@ function bindEvents(page: HTMLElement): void {
   bus.on('player:time-update', (time: number) => updateTimeDisplay(time));
   bus.on('player:state-change', (playing: boolean) => {
     const playBtn = page.querySelector('[data-action="play"]');
-    if (playBtn) playBtn.textContent = playing ? '⏸' : '▶';
+    if (playBtn) playBtn.innerHTML = playing ? SVG.pause : SVG.play;
   });
   bus.on('queue:changed', () => renderQueue());
 }
