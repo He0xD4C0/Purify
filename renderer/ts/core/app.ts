@@ -100,10 +100,6 @@ function navigateTo(hash: string): void {
 function showPlayerOverlay(): void {
   const page = document.getElementById('player-page');
   if (!page) return;
-  if (!page.classList.contains('hidden')) {
-    page.classList.add('hidden');
-    return;
-  }
   renderPlayerPage();
 }
 

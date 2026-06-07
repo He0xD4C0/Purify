@@ -78,10 +78,6 @@ function showPlayerOverlay() {
     const page = document.getElementById('player-page');
     if (!page)
         return;
-    if (!page.classList.contains('hidden')) {
-        page.classList.add('hidden');
-        return;
-    }
     renderPlayerPage();
 }
 // ---- Init ----
