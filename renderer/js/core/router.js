@@ -32,9 +32,9 @@ export const router = {
                 handler();
             }
             else {
-                const home = routes.get('home');
-                if (home)
-                    home();
+                const notFound = routes.get('404');
+                if (notFound)
+                    notFound();
             }
         };
         window.addEventListener('hashchange', handle);

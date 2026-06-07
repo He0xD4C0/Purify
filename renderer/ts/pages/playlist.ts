@@ -19,15 +19,6 @@ export function renderPlaylistDetail(container: HTMLElement, id: number): void {
 
     container.innerHTML = '';
 
-    // Back button
-    const backBtn = document.createElement('button');
-    backBtn.textContent = '← 返回';
-    backBtn.style.cssText = 'background:none;border:none;color:var(--accent);font-size:14px;cursor:pointer;margin-bottom:12px;';
-    backBtn.addEventListener('click', () => {
-      window.history.back();
-    });
-    container.appendChild(backBtn);
-
     // Header
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;gap:16px;align-items:flex-start;margin-bottom:20px;';

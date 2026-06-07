@@ -10,6 +10,7 @@ import { renderPlaylistDetail } from '../pages/playlist.js';
 import { renderSettings } from '../pages/settings.js';
 import { renderSearch } from '../pages/search.js';
 import { renderPlayerPage } from '../pages/player-page.js';
+import { render404 } from '../pages/404.js';
 import { renderLoginPanel } from '../components/login-panel.js';
 import { audioEngine } from '../player/audio-engine.js';
 import { auth, checkLogin, clearCookie, saveCookie } from './auth.js';
@@ -64,7 +65,7 @@ function renderContent(page) {
             renderAccount(container);
             break;
         default:
-            renderHome(container);
+            render404(container);
             break;
     }
 }
@@ -117,6 +118,8 @@ export async function init() {
     router.register('account', () => navigateTo('account'));
     router.register('settings', () => navigateTo('settings'));
     router.register('search', () => navigateTo(router.current())); // passes full hash incl. ?q=
+    router.register('playlist', () => navigateTo(router.current())); // passes full hash incl. /id
+    router.register('404', () => navigateTo('404'));
     // Player overlay — available globally on all pages
     bus.on('player:open-overlay', () => showPlayerOverlay());
     // Global login trigger — any page can request auth via modal overlay
