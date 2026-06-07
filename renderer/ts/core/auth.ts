@@ -62,10 +62,11 @@ export async function checkLogin(): Promise<void> {
       bus.emit('auth:login', auth.userProfile);
       return;
     }
-    // Server confirmed token expired/invalid — clear it
-    clearCookie();
+    // Server responded but no account — only clear if server confirms token invalid (code 301)
+    // Otherwise keep cookie (transient server issue)
+    if (res.data?.code === 301) clearCookie();
   } catch {
-    // Network error — keep cookie, keep previous state
+    // Network error / server unreachable — keep cookie, retry next time
   }
   auth.loggedIn = false;
 }
@@ -73,7 +74,7 @@ export async function checkLogin(): Promise<void> {
 // ---- Logout ----
 
 export function logout(): void {
-  auth.loggedIn = false;
+  clearCookie();
   auth.loggedIn = false;
   auth.userProfile = null;
   auth.vipType = 'none';
