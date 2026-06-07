@@ -37,13 +37,21 @@ export function renderPlayerPage(): void {
   const leftPanel = createMetaPanel();
   body.appendChild(leftPanel);
 
-  // Center cover
+  // Center cover — SVG placeholder when no track
   const coverCenter = document.createElement('div');
   coverCenter.className = 'player-cover-center';
-  const coverImg = document.createElement('img');
-  coverImg.id = 'player-cover-img';
-  coverImg.src = '';
-  coverCenter.appendChild(coverImg);
+  coverCenter.id = 'player-cover-center';
+  coverCenter.innerHTML = `
+    <div id="player-cover-placeholder" style="
+      width:min(60vw,60vh,400px);height:min(60vw,60vh,400px);
+      display:flex;align-items:center;justify-content:center;
+      background:var(--bg-tertiary);border-radius:var(--radius-lg);
+      color:var(--text-muted);box-shadow:0 8px 40px rgba(0,0,0,0.5);
+    ">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" width="80" height="80">
+        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+      </svg>
+    </div>`;
   body.appendChild(coverCenter);
 
   // Right panel — lyrics
@@ -221,10 +229,11 @@ function bindEvents(page: HTMLElement): void {
 }
 
 function updateTrackDisplay(page: HTMLElement, track: Track): void {
-  // Cover
-  const coverImg = page.querySelector('#player-cover-img') as HTMLImageElement;
-  if (coverImg) {
-    coverImg.src = track.album.picUrl ? `${track.album.picUrl}?param=800y800` : '';
+  // Cover — replace SVG placeholder with actual image
+  const coverCenter = page.querySelector('#player-cover-center');
+  if (coverCenter) {
+    const picUrl = track.album.picUrl ? `${track.album.picUrl}?param=800y800` : '';
+    coverCenter.innerHTML = `<img src="${picUrl}" alt="" style="width:min(60vw,60vh,400px);height:min(60vw,60vh,400px);border-radius:var(--radius-lg);object-fit:cover;box-shadow:0 8px 40px rgba(0,0,0,0.5);background:var(--bg-tertiary);">`;
   }
 
   // Total time
