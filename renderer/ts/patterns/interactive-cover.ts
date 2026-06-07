@@ -8,6 +8,7 @@ export function createInteractiveCover(
 ): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'interactive-cover';
+  wrapper.style.position = 'relative';
   wrapper.style.width = `${size}px`;
   wrapper.style.height = `${size}px`;
   wrapper.style.cursor = 'pointer';

@@ -2,6 +2,7 @@
 export function createInteractiveCover(picUrl, size, onClick, playable = false) {
     const wrapper = document.createElement('div');
     wrapper.className = 'interactive-cover';
+    wrapper.style.position = 'relative';
     wrapper.style.width = `${size}px`;
     wrapper.style.height = `${size}px`;
     wrapper.style.cursor = 'pointer';
