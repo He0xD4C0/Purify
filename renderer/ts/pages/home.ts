@@ -84,16 +84,12 @@ async function loadDaily(): Promise<void> {
     const res = await api.recommendSongs();
     const tracks = res.data?.dailySongs || [];
     if (tracks.length > 0) {
-      const listWrap = document.createElement('div');
-      listWrap.className = 'song-list-wrap';
-      section.appendChild(listWrap);
-      renderSongList(tracks.map(mapTrack).slice(0, 10), {
-        container: listWrap,
-        onPlay: (_, i) => {
-          const t = tracks[i];
-          playTrack(mapTrack(t), tracks.map(mapTrack));
-        },
-      });
+      const mapped = tracks.map(mapTrack);
+      const cols = buildDailyColumns(mapped.slice(0, 27)); // 3 cards × 9 cols max
+      const grid = document.createElement('div');
+      grid.className = 'daily-grid';
+      cols.forEach((col) => grid.appendChild(col));
+      section.appendChild(grid);
     }
   } catch {
     section.innerHTML += '<p class="text-muted text-sm">加载失败</p>';
@@ -145,6 +141,45 @@ async function loadNewSongs(container: HTMLElement): Promise<void> {
   } catch {
     // silently fail
   }
+}
+
+/** Build card columns for daily recs — max 3 cards per column, horizontal scroll */
+function buildDailyColumns(tracks: Track[]): HTMLElement[] {
+  const cols: HTMLElement[] = [];
+  const perCol = 3;
+
+  for (let i = 0; i < tracks.length; i += perCol) {
+    const col = document.createElement('div');
+    col.className = 'daily-col';
+
+    for (let j = i; j < i + perCol && j < tracks.length; j++) {
+      const t = tracks[j];
+      const card = document.createElement('div');
+      card.className = 'daily-card';
+
+      const cover = document.createElement('img');
+      cover.src = t.album.picUrl ? `${t.album.picUrl}?param=120y120` : '';
+      cover.alt = '';
+      cover.loading = 'lazy';
+      cover.className = 'daily-cover';
+      cover.addEventListener('click', () => playTrack(t, tracks));
+
+      const info = document.createElement('div');
+      info.className = 'daily-info';
+      info.innerHTML = `
+        <div class="daily-title">${t.name}</div>
+        <div class="daily-artist">${t.artists.map((a) => a.name).join('/')}</div>
+      `;
+
+      card.appendChild(cover);
+      card.appendChild(info);
+      col.appendChild(card);
+    }
+
+    cols.push(col);
+  }
+
+  return cols;
 }
 
 function mapTrack(raw: any): Track {
