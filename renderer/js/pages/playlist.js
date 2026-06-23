@@ -14,25 +14,32 @@ export function renderPlaylistDetail(container, id) {
         container.innerHTML = '';
         // Header
         const header = document.createElement('div');
-        header.style.cssText = 'display:flex;gap:16px;align-items:flex-start;margin-bottom:20px;';
+        header.className = 'pl-header';
         // Cover
         const cover = createInteractiveCover(pl.coverImgUrl, 160, () => { }, true);
         header.appendChild(cover);
         const info = document.createElement('div');
+        info.className = 'pl-info';
         info.innerHTML = `
-      <h2 style="margin-bottom:8px;">${pl.name}</h2>
-      <p style="color:var(--text-secondary);font-size:13px;margin-bottom:4px;">
+      <h2>${pl.name}</h2>
+      <p class="pl-meta">
         ${pl.creator?.nickname || ''} · ${pl.trackCount || 0} 首
       </p>
-      <p style="color:var(--text-muted);font-size:12px;line-height:1.5;max-height:60px;overflow:hidden;">
-        ${pl.description || ''}
-      </p>
-      <button id="pl-play-all" style="margin-top:12px;padding:8px 24px;background:var(--accent);color:white;border:none;border-radius:24px;font-size:14px;cursor:pointer;">
-        ▶ 播放全部
+      ${pl.description ? `<p class="pl-desc" id="pl-desc">${pl.description}</p>` : ''}
+      <button id="pl-play-all" class="pl-play-all">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        播放全部
       </button>
     `;
         header.appendChild(info);
         container.appendChild(header);
+        // Description expand/collapse
+        const descEl = info.querySelector('#pl-desc');
+        if (descEl) {
+            descEl.addEventListener('click', () => {
+                descEl.classList.toggle('expanded');
+            });
+        }
         // Tracks
         api.playlistTrackAll(id).then((trackRes) => {
             const tracks = (trackRes.songs || []).map((s) => ({

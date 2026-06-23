@@ -1,5 +1,7 @@
 // Playlist card component for discovery / library grids
 
+import { createCover } from './cover.js';
+
 export interface PlaylistInfo {
   id: number;
   name: string;
@@ -17,21 +19,17 @@ export function renderPlaylistCard(
   const card = document.createElement('div');
   card.className = 'playlist-card';
 
-  const cover = document.createElement('img');
-  cover.className = 'card-cover';
   const pic = playlist.coverImgUrl || playlist.picUrl || '';
-  cover.src = pic ? `${pic}?param=300y300` : '';
-  cover.alt = playlist.name;
-  cover.loading = 'lazy';
-  cover.onerror = () => {
-    cover.style.background = 'var(--bg-tertiary)';
-  };
+  const coverEl = createCover(pic, 120, {
+    className: 'card-cover',
+    alt: playlist.name,
+  });
 
   const title = document.createElement('div');
   title.className = 'card-title';
   title.textContent = playlist.name;
 
-  card.appendChild(cover);
+  card.appendChild(coverEl);
   card.appendChild(title);
   card.addEventListener('click', onClick);
 

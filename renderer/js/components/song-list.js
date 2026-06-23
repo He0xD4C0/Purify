@@ -2,6 +2,7 @@
 import { bus } from '../core/event-bus.js';
 import { state, formatDuration } from '../core/app.js';
 import { detectStatus, renderBadge } from './music-badge.js';
+import { createCover } from './cover.js';
 // SVG icons for action buttons
 const ICONS = {
     play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
@@ -26,18 +27,15 @@ export function renderSongList(tracks, options) {
         numEl.textContent = options.numbered !== false ? String(i + 1) : '';
         // ---- Cover (click = play) ----
         if (options.showCover !== false) {
-            const cover = document.createElement('img');
-            cover.className = 'song-cover';
-            cover.src = track.album.picUrl ? `${track.album.picUrl}?param=80y80` : '';
-            cover.alt = '';
-            cover.loading = 'lazy';
-            cover.onerror = () => { cover.style.display = 'none'; };
-            cover.addEventListener('click', (e) => {
-                e.stopPropagation();
-                options.onPlay?.(track, i);
+            const coverEl = createCover(track.album.picUrl || '', 40, {
+                className: 'song-cover',
+                onClick: (e) => {
+                    e.stopPropagation();
+                    options.onPlay?.(track, i);
+                },
             });
             row.appendChild(numEl);
-            row.appendChild(cover);
+            row.appendChild(coverEl);
         }
         else {
             row.appendChild(numEl);

@@ -5,6 +5,7 @@ import { api } from '../core/api.js';
 import { SwipeBanner } from '../patterns/swipe-banner.js';
 import { renderPlaylistGrid } from '../components/playlist-card.js';
 import { renderSongList } from '../components/song-list.js';
+import { createCover } from '../components/cover.js';
 import { bus } from '../core/event-bus.js';
 let banner;
 export function renderHome(container) {
@@ -80,6 +81,36 @@ async function loadDaily() {
             grid.className = 'daily-grid';
             cols.forEach((col) => grid.appendChild(col));
             section.appendChild(grid);
+            // 标记溢出文本，生成动态滚动动画
+            requestAnimationFrame(() => {
+                grid.querySelectorAll('.marquee-text').forEach((el) => {
+                    const parent = el.parentElement;
+                    if (!parent)
+                        return;
+                    const textW = el.scrollWidth;
+                    const boxW = parent.clientWidth;
+                    if (textW > boxW) {
+                        el.classList.add('overflow');
+                        // 动态 keyframes: 停顿 → 向左滑出 → 从右侧滑入 → 停顿
+                        const totalDist = textW + boxW; // 完整滚动距离（左滑出 + 右滑入）
+                        const speed = 38; // px/s
+                        const duration = totalDist / speed;
+                        const pauseEnd = 20; // 首尾各停顿 20%
+                        const scrollOut = Math.round((textW / totalDist) * (100 - pauseEnd * 2));
+                        const jump = scrollOut + pauseEnd + 0.1; // 跳跃点(不可见)
+                        const scrollIn = 100 - pauseEnd;
+                        const name = `marquee-${Math.random().toString(36).slice(2, 8)}`;
+                        const sheet = document.styleSheets[0];
+                        sheet.insertRule(`@keyframes ${name} {
+              0%, ${pauseEnd}% { transform: translateX(0); }
+              ${scrollOut + pauseEnd}% { transform: translateX(-${textW}px); }
+              ${jump}% { transform: translateX(${boxW}px); }
+              ${scrollIn}%, 100% { transform: translateX(0); }
+            }`, sheet.cssRules.length);
+                        el.style.animation = `${name} ${duration}s linear infinite`;
+                    }
+                });
+            });
         }
     }
     catch {
@@ -99,9 +130,15 @@ async function loadPersonalized(container) {
     }
 }
 async function loadNewSongs(container) {
+    const loadingEl = document.createElement('p');
+    loadingEl.className = 'text-muted text-sm';
+    loadingEl.style.padding = '8px 0';
+    loadingEl.textContent = '加载中...';
+    container.appendChild(loadingEl);
     try {
         const res = await api.personalizedNewsong(10);
         const songs = res.result || [];
+        loadingEl.remove();
         if (songs.length > 0) {
             const listWrap = document.createElement('div');
             container.appendChild(listWrap);
@@ -130,7 +167,7 @@ async function loadNewSongs(container) {
         }
     }
     catch {
-        // silently fail
+        loadingEl.remove();
     }
 }
 /** Build card columns for daily recs — max 3 cards per column, horizontal scroll */
@@ -144,19 +181,17 @@ function buildDailyColumns(tracks) {
             const t = tracks[j];
             const card = document.createElement('div');
             card.className = 'daily-card';
-            const cover = document.createElement('img');
-            cover.src = t.album.picUrl ? `${t.album.picUrl}?param=120y120` : '';
-            cover.alt = '';
-            cover.loading = 'lazy';
-            cover.className = 'daily-cover';
-            cover.addEventListener('click', () => playTrack(t, tracks));
+            const coverEl = createCover(t.album.picUrl || '', 60, {
+                className: 'daily-cover',
+                onClick: () => playTrack(t, tracks),
+            });
             const info = document.createElement('div');
             info.className = 'daily-info';
             info.innerHTML = `
-        <div class="daily-title">${t.name}</div>
-        <div class="daily-artist">${t.artists.map((a) => a.name).join('/')}</div>
+        <div class="daily-title"><span class="marquee-text">${t.name}</span></div>
+        <div class="daily-artist"><span class="marquee-text">${t.artists.map((a) => a.name).join('/')}</span></div>
       `;
-            card.appendChild(cover);
+            card.appendChild(coverEl);
             card.appendChild(info);
             col.appendChild(card);
         }

@@ -2,6 +2,7 @@
 
 import { bus } from '../core/event-bus.js';
 import { state, formatTime, type Track } from '../core/app.js';
+import { api } from '../core/api.js';
 import { audioEngine } from '../player/audio-engine.js';
 import { lyricsEngine } from '../player/lyrics-engine.js';
 import { renderBadge, detectStatus } from '../components/music-badge.js';
@@ -21,7 +22,8 @@ export function renderPlayerPage(): void {
   header.className = 'player-header';
   const backBtn = document.createElement('button');
   backBtn.className = 'ph-back';
-  backBtn.textContent = '▼ 收起';
+  backBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="6 9 12 15 18 9"/></svg>';
+  backBtn.title = '收起';
   backBtn.addEventListener('click', () => {
     page.classList.add('hidden');
     bus.emit('player:page-close');
@@ -79,13 +81,17 @@ export function renderPlayerPage(): void {
   const controls = document.createElement('div');
   controls.className = 'player-controls';
   controls.innerHTML = `
-    <button class="pc-btn" data-action="metadata" title="元数据">${SVG.meta}</button>
-    <button class="pc-btn" data-action="prev" title="上一首">${SVG.prev}</button>
-    <button class="pc-btn play-btn" data-action="play" title="播放/暂停">${SVG.play}</button>
-    <button class="pc-btn" data-action="next" title="下一首">${SVG.next}</button>
-    <button class="pc-btn" data-action="mode" id="pc-mode-btn" title="播放模式">${SVG.list}</button>
-    <button class="pc-btn" data-action="lyrics" title="歌词">${SVG.lyrics}</button>
-    <button class="pc-btn" data-action="queue" title="队列">${SVG.queue}</button>
+    <div class="ctrl-group left">
+      <button class="pc-btn" data-action="metadata" title="元数据">${SVG.meta}</button>
+      <button class="pc-btn" data-action="prev" title="上一首">${SVG.prev}</button>
+    </div>
+    <button class="pc-btn play-btn" data-action="play" title="播放/暂停">${state.playing ? SVG.pause : SVG.play}</button>
+    <div class="ctrl-group right">
+      <button class="pc-btn" data-action="next" title="下一首">${SVG.next}</button>
+      <button class="pc-btn" data-action="mode" id="pc-mode-btn" title="播放模式">${SVG.list}</button>
+      <button class="pc-btn" data-action="lyrics" title="歌词">${SVG.lyrics}</button>
+      <button class="pc-btn" data-action="queue" title="队列">${SVG.queue}</button>
+    </div>
   `;
   page.appendChild(controls);
 
@@ -198,7 +204,13 @@ function bindControls(page: HTMLElement): void {
     togglePanel('panel-meta');
   });
   page.querySelector('[data-action="lyrics"]')?.addEventListener('click', () => {
+    const panel = document.getElementById('panel-lyrics');
+    const willOpen = panel && !panel.classList.contains('open');
     togglePanel('panel-lyrics');
+    // Fetch lyrics on first open
+    if (willOpen && state.currentTrack) {
+      lyricsEngine.fetch(state.currentTrack.id).then(() => renderLyrics());
+    }
   });
   page.querySelector('[data-action="queue"]')?.addEventListener('click', () => {
     togglePanel('panel-queue');
@@ -257,8 +269,11 @@ function updateTrackDisplay(page: HTMLElement, track: Track): void {
     `;
   }
 
-  // Load lyrics
-  lyricsEngine.fetch(track.id).then(() => renderLyrics());
+  // Load lyrics (only if panel is open)
+  const lyricsPanel = document.getElementById('panel-lyrics');
+  if (lyricsPanel?.classList.contains('open')) {
+    lyricsEngine.fetch(track.id).then(() => renderLyrics());
+  }
 
   // Load similar (lazy)
   loadSimilar(track.id);
@@ -407,8 +422,7 @@ function renderQueue(): void {
 
 async function loadSimilar(songId: number): Promise<void> {
   try {
-    const res = await fetch(`http://${location.hostname}:15678/simi/song?id=${songId}`, { method: 'POST' });
-    const json = await res.json();
+    const json = await api.simiSong(songId);
     const songs = json.songs || [];
 
     const metaSimilar = document.getElementById('meta-similar');

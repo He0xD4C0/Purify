@@ -4,123 +4,17 @@ import { bus } from '../core/event-bus.js';
 import { auth, logout } from '../core/auth.js';
 import { renderUserVipBadge } from '../components/music-badge.js';
 import { api } from '../core/api.js';
+import { loadCSS } from '../core/css-loader.js';
+loadCSS('css/account.css');
 let activeSubPage = 'main';
-// ---- Styles ----
-let stylesInjected = false;
-function injectStyles() {
-    if (stylesInjected)
-        return;
-    stylesInjected = true;
-    const s = document.createElement('style');
-    s.textContent = `
-    .acct-hero {
-      text-align: center; padding: 32px 20px 24px;
-    }
-    .acct-avatar-lg {
-      width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
-      background: var(--bg-tertiary);
-    }
-    .acct-name-lg {
-      font-size: 22px; font-weight: 700; margin-top: 12px;
-    }
-    .acct-sub {
-      font-size: 13px; color: var(--text-muted); margin-top: 4px;
-    }
-    .acct-stats {
-      display: flex; justify-content: center; gap: 32px;
-      margin: 20px 16px;
-      padding: 12px 0;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-    }
-    .acct-stat { text-align: center; }
-    .acct-stat-num { font-size: 20px; font-weight: 700; }
-    .acct-stat-label {
-      font-size: 11px; color: var(--text-muted); margin-top: 2px;
-    }
-    /* Grouped list — iOS-style */
-    .acct-section { margin: 0 16px 16px; }
-    .acct-section-title {
-      font-size: 11px; color: var(--text-muted); text-transform: uppercase;
-      letter-spacing: 1px; padding: 0 4px 8px;
-    }
-    .acct-group {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-    .acct-item {
-      display: flex; align-items: center;
-      padding: 14px 16px;
-      cursor: pointer; transition: background var(--transition-fast);
-      border: none; width: 100%; text-align: left;
-      color: var(--text-primary); font-size: 14px;
-      background: none;
-    }
-    .acct-item + .acct-item {
-      border-top: 1px solid var(--border);
-    }
-    .acct-item:hover { background: var(--bg-hover); }
-    .acct-item .acct-item-icon { margin-right: 12px; font-size: 18px; }
-    .acct-item .acct-item-label { flex: 1; }
-    .acct-item .acct-item-value { color: var(--text-muted); font-size: 13px; margin-right: 8px; }
-    .acct-item .acct-item-arrow { color: var(--text-muted); font-size: 16px; }
-    .acct-item.danger { color: #ff4444; }
-    .acct-item.danger:hover { background: rgba(255,68,68,0.08); }
-    .acct-item.danger + .acct-item { border-top-color: rgba(255,68,68,0.15); }
-    .acct-toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--bg-hover);
-      border: none; cursor: pointer; position: relative; transition: background var(--transition-fast);
-      flex-shrink: 0; }
-    .acct-toggle.on { background: var(--accent); }
-    .acct-toggle::after { content: ''; position: absolute; top: 2px; left: 2px;
-      width: 20px; height: 20px; border-radius: 50%; background: white;
-      transition: transform var(--transition-fast); }
-    .acct-toggle.on::after { transform: translateX(20px); }
-    .acct-btn-primary {
-      padding: 10px 32px; background: var(--accent); color: white;
-      border: none; border-radius: var(--radius-pill); font-size: 15px;
-      cursor: pointer; margin-top: 16px;
-    }
-    .acct-back-btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 8px 16px; margin-bottom: 8px;
-      background: none; border: none; color: var(--text-secondary);
-      font-size: 14px; cursor: pointer;
-    }
-    .acct-back-btn:hover { color: var(--text-primary); }
-    /* Info card */
-    .acct-info-card {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-    .acct-info-card .acct-item {
-      cursor: default;
-    }
-    .acct-info-card .acct-item:hover {
-      background: none;
-    }
-    /* Form inputs in sub-pages */
-    .acct-field {
-      width: 100%; padding: 8px 12px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text-primary); font-size: 14px;
-      outline: none;
-    }
-    .acct-field:focus { border-color: var(--accent); }
-  `;
-    document.head.appendChild(s);
-}
 export function renderAccount(container) {
-    injectStyles();
     activeSubPage = 'main';
     container.innerHTML = '';
-    renderMain(container);
+    // Fixed-width centered page wrapper
+    const page = document.createElement('div');
+    page.className = 'acct-page';
+    container.appendChild(page);
+    renderMain(page);
 }
 // ============ Main account page ============
 function renderMain(container) {

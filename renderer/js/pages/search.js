@@ -30,34 +30,15 @@ export function renderSearch(container, query) {
     // ---- Tabs ----
     const tabBar = document.createElement('div');
     tabBar.className = 'search-tab-bar';
-    tabBar.style.cssText = 'display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border);';
     TABS.forEach((t) => {
         const btn = document.createElement('button');
-        btn.className = 'search-tab-btn';
-        btn.style.cssText = `
-      padding:10px 20px;background:none;border:none;
-      border-bottom:2px solid transparent;
-      color:var(--text-secondary);font-size:14px;cursor:pointer;
-      transition:all var(--transition-fast);
-    `;
+        btn.className = 'search-tab-btn' + (t.key === activeTab ? ' active' : '');
         btn.innerHTML = `${t.label}${cachedResults[t.key] ? ` <span style="font-size:11px;color:var(--text-muted);">${cachedResults[t.key].total}</span>` : ''}`;
         btn.dataset.key = t.key;
-        if (t.key === activeTab) {
-            btn.style.color = 'var(--text-primary)';
-            btn.style.borderBottomColor = 'var(--accent)';
-            btn.style.fontWeight = '600';
-        }
         btn.addEventListener('click', () => {
             activeTab = t.key;
-            tabBar.querySelectorAll('.search-tab-btn').forEach((b) => {
-                const el = b;
-                el.style.color = 'var(--text-secondary)';
-                el.style.fontWeight = '';
-                el.style.borderBottomColor = 'transparent';
-            });
-            btn.style.color = 'var(--text-primary)';
-            btn.style.fontWeight = '600';
-            btn.style.borderBottomColor = 'var(--accent)';
+            tabBar.querySelectorAll('.search-tab-btn').forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
             renderActiveTab(resultsWrap);
         });
         tabBar.appendChild(btn);
@@ -143,10 +124,7 @@ function renderSongResults(container, songs) {
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 12px;margin-bottom:4px;';
     header.innerHTML = `
-    <button class="search-play-all" style="
-      padding:6px 16px;background:var(--accent);color:white;border:none;
-      border-radius:var(--radius-pill);font-size:13px;cursor:pointer;
-    ">▶ 播放全部</button>
+    <button class="search-play-all">▶ 播放全部</button>
     <span style="font-size:12px;color:var(--text-muted);">共 ${songs.length} 首</span>
   `;
     header.querySelector('.search-play-all')?.addEventListener('click', () => {
@@ -170,19 +148,16 @@ function renderAlbumResults(container, albums) {
     }
     container.innerHTML = '';
     const grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;';
+    grid.className = 'search-grid';
     albums.forEach((a) => {
         const card = document.createElement('div');
-        card.style.cssText = 'cursor:pointer;transition:transform var(--transition-fast);';
-        card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-2px)'; });
-        card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+        card.className = 'search-card';
         card.addEventListener('click', () => { });
         const year = a.publishTime ? new Date(a.publishTime).getFullYear() : '';
         card.innerHTML = `
-      <img style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-pill);background:var(--bg-tertiary);" src="${a.picUrl || ''}?param=400y400" alt="${a.name}">
-      <div style="margin-top:8px;font-size:14px;font-weight:500;line-height:1.3;
-        display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${a.name}</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+      <img class="search-card-img" src="${a.picUrl || ''}?param=400y400" alt="${a.name}">
+      <div class="search-card-name">${a.name}</div>
+      <div class="search-card-sub">
         ${a.artist?.name || ''}${year ? ` · ${year}` : ''}
       </div>
     `;
@@ -198,16 +173,17 @@ function renderArtistResults(container, artists) {
     }
     container.innerHTML = '';
     const grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;';
+    grid.className = 'search-grid-artist';
     artists.forEach((a) => {
         const card = document.createElement('div');
-        card.style.cssText = 'text-align:center;cursor:pointer;';
+        card.className = 'search-card';
+        card.style.textAlign = 'center';
         card.addEventListener('click', () => { });
         card.innerHTML = `
-      <img style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:50%;background:var(--bg-tertiary);" src="${a.picUrl || a.img1v1Url || ''}?param=300y300" alt="${a.name}">
-      <div style="margin-top:10px;font-size:14px;font-weight:500;">${a.name}</div>
-      ${a.alias && a.alias.length > 0 ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${a.alias.join(' / ')}</div>` : ''}
-      ${a.albumSize ? `<div style="font-size:11px;color:var(--text-muted);">${a.albumSize} 张专辑</div>` : ''}
+      <img class="search-card-img circle" src="${a.picUrl || a.img1v1Url || ''}?param=300y300" alt="${a.name}">
+      <div class="search-artist-name">${a.name}</div>
+      ${a.alias && a.alias.length > 0 ? `<div class="search-artist-alias">${a.alias.join(' / ')}</div>` : ''}
+      ${a.albumSize ? `<div class="search-artist-count">${a.albumSize} 张专辑</div>` : ''}
     `;
         grid.appendChild(card);
     });
@@ -221,18 +197,15 @@ function renderPlaylistResults(container, playlists) {
     }
     container.innerHTML = '';
     const grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;';
+    grid.className = 'search-grid';
     playlists.forEach((pl) => {
         const card = document.createElement('div');
-        card.style.cssText = 'cursor:pointer;transition:transform var(--transition-fast);';
-        card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-2px)'; });
-        card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+        card.className = 'search-card';
         card.addEventListener('click', () => { window.location.hash = `playlist/${pl.id}`; });
         card.innerHTML = `
-      <img style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-pill);background:var(--bg-tertiary);" src="${pl.coverImgUrl || ''}?param=400y400" alt="${pl.name}">
-      <div style="margin-top:8px;font-size:14px;font-weight:500;line-height:1.3;
-        display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${pl.name}</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+      <img class="search-card-img" src="${pl.coverImgUrl || ''}?param=400y400" alt="${pl.name}">
+      <div class="search-card-name">${pl.name}</div>
+      <div class="search-card-sub">
         ${pl.trackCount ? `${pl.trackCount} 首` : ''}${pl.creator?.nickname ? ` · by ${pl.creator.nickname}` : ''}
       </div>
     `;

@@ -6,7 +6,7 @@ import { initSearchBar } from '../components/search-bar.js';
 import { renderHome } from '../pages/home.js';
 import { renderLibrary } from '../pages/library.js';
 import { renderAccount } from '../pages/account.js';
-import { renderPlaylistDetail } from '../pages/playlist.js';
+import { renderCollectionDetail } from '../pages/detail.js';
 import { renderSettings } from '../pages/settings.js';
 import { renderSearch } from '../pages/search.js';
 import { renderPlayerPage } from '../pages/player-page.js';
@@ -68,10 +68,14 @@ function getContent(): HTMLElement {
 function renderContent(page: string): void {
   const container = getContent();
 
-  // Handle sub-routes like playlist/123, settings, search?q=
+  // Handle sub-routes like playlist/123, album/123, settings, search?q=
   if (page.startsWith('playlist/')) {
     const id = parseInt(page.split('/')[1]);
-    if (id) { renderPlaylistDetail(container, id); return; }
+    if (id) { renderCollectionDetail(container, 'playlist', id); return; }
+  }
+  if (page.startsWith('album/')) {
+    const id = parseInt(page.split('/')[1]);
+    if (id) { renderCollectionDetail(container, 'album', id); return; }
   }
   if (page.startsWith('search')) {
     const q = new URLSearchParams(page.split('?')[1] || '').get('q') || '';
@@ -141,6 +145,7 @@ export async function init(): Promise<void> {
   router.register('settings', () => navigateTo('settings'));
   router.register('search', () => navigateTo(router.current())); // passes full hash incl. ?q=
   router.register('playlist', () => navigateTo(router.current())); // passes full hash incl. /id
+  router.register('album', () => navigateTo(router.current()));    // passes full hash incl. /id
   router.register('404', () => navigateTo('404'));
 
   // Player overlay — available globally on all pages
