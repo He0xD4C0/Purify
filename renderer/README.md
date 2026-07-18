@@ -1,13 +1,13 @@
 # Renderer — Purify 前端
 
-TypeScript SPA，编译到 `js/` 目录，由 Express 静态托管。
+TypeScript SPA，编译到 `built/` 目录，由 Express 静态托管。
 
-## 目录结构
+## 目录结构 (ver.2026-07-17)
 
 ```
-ts/
+src/
 ├── core/           # 核心模块
-│   ├── app.ts      # 入口、全局状态、页面路由分发
+│   ├── app.ts      # 入口、全局状态、应用编排
 │   ├── api.ts      # 后端 API 客户端（fetch 封装）
 │   ├── auth.ts     # 登录态管理、Cookie 读写
 │   ├── router.ts   # Hash-based SPA 路由
@@ -61,4 +61,4 @@ npm run tsc         # 编译检查
 npm run tsc:watch   # 监听模式
 ```
 
-输出目录: `renderer/js/`（ESNext 模块，浏览器直接加载）
+输出目录: `renderer/built/`（ESNext 模块，浏览器直接加载）
