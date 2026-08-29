@@ -15,7 +15,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@neteasecloudmusicapienhanced/unblockmusic-utils": "^0.3.2",
+    "@neteasecloudmusicapienhanced/unblockmusic-utils": "^0.4.4",
     "axios": "^1.16.1",
     "crypto-js": "^4.2.0",
     "dotenv": "^17.4.2",
